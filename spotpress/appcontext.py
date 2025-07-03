@@ -1,5 +1,3 @@
-import uinput
-
 
 class AppContext:
     def __init__(

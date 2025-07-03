@@ -27,7 +27,10 @@ from PyQt5.QtWidgets import (
 from PyQt5.QtGui import QGuiApplication, QIcon, QPainter, QPixmap, QColor
 from PyQt5.QtCore import Qt, pyqtSignal, QTimer
 from spotpress.appcontext import AppContext
-from spotpress.devices import DeviceMonitor
+if sys.platform.startswith("win"):
+    from spotpress.devices_win import DeviceMonitor
+else:
+    from spotpress.devices import DeviceMonitor
 from spotpress.spotlight import SpotlightOverlayWindow
 from spotpress.infoverlay import InfOverlayWindow
 from spotpress.utils import capture_monitor_screenshot
@@ -81,7 +84,7 @@ class SpotpressPreferences(QMainWindow):
 
         # Quando fechar a janela, ao invés de fechar, esconder
         self.setWindowFlags(self.windowFlags() | Qt.WindowMinimizeButtonHint)
-        self.setMinimumSize(650, 650)
+        self.setMinimumSize(650, 740)
 
         self.tabs = QTabWidget()
         self.preferences_tab = QWidget()
