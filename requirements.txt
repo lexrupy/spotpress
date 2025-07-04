@@ -1,9 +1,6 @@
 evdev
 pyqt5 
-hid 
 python-uinput 
 mss 
-Pillow 
 pyudev 
-pystray 
 screeninfo

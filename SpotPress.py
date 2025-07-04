@@ -27,13 +27,16 @@ from PyQt5.QtWidgets import (
 from PyQt5.QtGui import QGuiApplication, QIcon, QPainter, QPixmap, QColor
 from PyQt5.QtCore import Qt, pyqtSignal, QTimer
 from spotpress.appcontext import AppContext
-if sys.platform.startswith("win"):
-    from spotpress.devices_win import DeviceMonitor
-else:
-    from spotpress.devices import DeviceMonitor
 from spotpress.spotlight import SpotlightOverlayWindow
 from spotpress.infoverlay import InfOverlayWindow
 from spotpress.utils import capture_monitor_screenshot
+
+WINDOWS_OS = False
+if sys.platform.startswith("win"):
+    WINDOWS_OS = True
+    from spotpress.devices_win import DeviceMonitor
+else:
+    from spotpress.devices import DeviceMonitor
 
 laser_colors = [
     (QColor(255, 0, 0), "Red"),
@@ -84,7 +87,10 @@ class SpotpressPreferences(QMainWindow):
 
         # Quando fechar a janela, ao invés de fechar, esconder
         self.setWindowFlags(self.windowFlags() | Qt.WindowMinimizeButtonHint)
-        self.setMinimumSize(650, 740)
+        if WINDOWS_OS:
+            self.setMinimumSize(650, 740)
+        else:
+            self.setMinimumSize(650, 640)
 
         self.tabs = QTabWidget()
         self.preferences_tab = QWidget()
@@ -656,6 +662,7 @@ class SpotpressPreferences(QMainWindow):
             self.general_enable_auto_mode.setChecked(True)
 
     def on_test_clicked(self):
+        self._ctx.overlay_window.set_spotlight_mode()
         QMessageBox.information(self, "Título", "Mensagem exibida com sucesso!")
 
 
