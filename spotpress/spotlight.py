@@ -12,7 +12,7 @@ from PyQt5.QtGui import (
     QPen,
     QBrush,
 )
-from PyQt5.QtCore import Qt, QRect, QTimer, QPointF, QRectF, QPoint
+from PyQt5.QtCore import Qt, QRect, QTimer, QPointF, QRectF, QPoint, QEvent
 
 from .utils import (
     MODE_MAP,
@@ -35,7 +35,11 @@ class SpotlightOverlayWindow(QWidget):
     def __init__(self, context, screenshot, screen_geometry, monitor_index):
         super().__init__()
 
+
         self._ctx = context
+
+        if self._ctx.windows_os:
+            QApplication.instance().installEventFilter(self)
 
         self.setWindowFlags(
             Qt.FramelessWindowHint
@@ -107,6 +111,32 @@ class SpotlightOverlayWindow(QWidget):
 
         self.center_screen = self.geometry().center()
         QCursor.setPos(self.center_screen)
+
+
+    def eventFilter(self, obj, event):
+        if event.type() == QEvent.KeyPress:
+            self.do_keypress(event)
+            return True  # impede propagação se quiser
+        return False
+
+
+    def do_keypress(self, event):
+            key = event.key()
+            now = time.time()
+
+            if key == Qt.Key_Escape:
+                if now - self.last_key_time < 1.0 and self.last_key_pressed == Qt.Key_Escape:
+                    self.quit()
+            elif key == Qt.Key_P:
+                self.capture_screenshot()
+                self.update()
+            elif key == Qt.Key_M:
+                self.switch_mode(step=1)
+                self.update()
+
+            self.last_key_time = now
+            self.last_key_pressed = key
+
 
     def clear_pixmap(self):
         if self._always_take_screenshot:
@@ -758,25 +788,8 @@ class SpotlightOverlayWindow(QWidget):
         self.update()
 
     def keyPressEvent(self, event):
-        key = event.key()
-        now = time.time()
-        # modifiers = QApplication.keyboardModifiers()
-        if key == Qt.Key_Escape:
-            if (
-                now - self.last_key_time < 1.0
-                and self.last_key_pressed == Qt.Key_Escape
-            ):
-                self.quit()
+        self.do_keypress(event)
 
-        if key == Qt.Key_P:
-            self.capture_screenshot()
-            self.update()
-        if key == Qt.Key_M:
-            self.switch_mode(step=1)
-            self.update()
-
-        self.last_key_time = now
-        self.last_key_pressed = key
 
     def closeEvent(self, event):
         # self.save_config()

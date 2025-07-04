@@ -23,6 +23,7 @@ from PyQt5.QtWidgets import (
     QListWidget,
     QMainWindow,
     QGroupBox,
+    QDesktopWidget
 )
 from PyQt5.QtGui import QGuiApplication, QIcon, QPainter, QPixmap, QColor
 from PyQt5.QtCore import Qt, pyqtSignal, QTimer
@@ -88,7 +89,7 @@ class SpotpressPreferences(QMainWindow):
         # Quando fechar a janela, ao invés de fechar, esconder
         self.setWindowFlags(self.windowFlags() | Qt.WindowMinimizeButtonHint)
         if WINDOWS_OS:
-            self.setMinimumSize(650, 740)
+            self.setMinimumSize(650, 760)
         else:
             self.setMinimumSize(650, 640)
 
@@ -133,8 +134,12 @@ class SpotpressPreferences(QMainWindow):
             main_window=self,
         )
 
+        self._ctx.windows_os = WINDOWS_OS
+
         self.tray_icon = None
         self.create_tray_icon()
+
+        self.center_on_screen()
 
         self.create_spotlight_overlay()
 
@@ -397,6 +402,24 @@ class SpotpressPreferences(QMainWindow):
         button_layout.addWidget(clear_btn)
         layout.addLayout(button_layout)
         self.log_tab.setLayout(layout)
+
+
+
+    def center_on_screen(self):
+        # Get the screen's available geometry
+        screen_geometry = QDesktopWidget().availableGeometry()
+
+        # Get the center point of the screen
+        screen_center_point = screen_geometry.center()
+
+        # Get the current geometry of the window
+        qt_rectangle = self.frameGeometry()
+
+        # Move the center of the window's rectangle to the screen's center
+        qt_rectangle.moveCenter(screen_center_point)
+
+        # Move the window to the top-left corner of the adjusted rectangle
+        self.move(qt_rectangle.topLeft())
 
     def on_tray_icon_activated(self, reason):
         if reason == QSystemTrayIcon.Trigger:
@@ -663,7 +686,7 @@ class SpotpressPreferences(QMainWindow):
 
     def on_test_clicked(self):
         self._ctx.overlay_window.set_spotlight_mode()
-        QMessageBox.information(self, "Título", "Mensagem exibida com sucesso!")
+
 
 
 if __name__ == "__main__":

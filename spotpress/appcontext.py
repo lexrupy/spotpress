@@ -15,10 +15,19 @@ class AppContext:
         self._show_info_function = show_info_function
         self._compatible_modes = []
         self._support_auto_mode = False
+        self._windows_os = False
 
         self._main_window = main_window
 
         self._active_device = None
+
+    @property
+    def windows_os(self):
+        return self._windows_os
+
+    @windows_os.setter
+    def windows_os(self, wo):
+        self._windows_os = wo
 
     @property
     def main_window(self):

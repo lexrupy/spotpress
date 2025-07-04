@@ -6,7 +6,7 @@ from spotpress.utils import (
     MODE_PEN,
 )
 
-from .pointerdevice import BasePointerDevice
+from .pointerdevice_win import BasePointerDevice
 
 
 class VirtualPointer(BasePointerDevice):
@@ -17,8 +17,8 @@ class VirtualPointer(BasePointerDevice):
     DOUBLE_CLICK_INTERVAL = 0.4  # segundos
     REPEAT_INTERVAL = 0.05
 
-    def __init__(self, app_ctx, hidraw_path):
-        super().__init__(app_ctx=app_ctx, hidraw_path=hidraw_path)
+    def __init__(self, app_ctx, hid_device):
+        super().__init__(app_ctx=app_ctx, hid_device=hid_device)
         # botao: {start_time, long_timer, repeat_timer, long_pressed}
 
         # self._button_states = {}
