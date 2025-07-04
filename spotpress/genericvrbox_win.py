@@ -80,6 +80,7 @@ class GenericVRBoxPointer(BasePointerDevice):
             del self._pending_click_timers[botao]
 
         if not is_second_click:
+
             def emitir_clique_simples():
                 current_state = self._button_states.get(botao)
                 if current_state is None or (
@@ -89,7 +90,9 @@ class GenericVRBoxPointer(BasePointerDevice):
                     self.executa_acao(botao, state=1)
                 self._pending_click_timers.pop(botao, None)
 
-            click_timer = threading.Timer(self.LONG_PRESS_INTERVAL, emitir_clique_simples)
+            click_timer = threading.Timer(
+                self.LONG_PRESS_INTERVAL, emitir_clique_simples
+            )
             click_timer.start()
             self._pending_click_timers[botao] = click_timer
 
@@ -168,7 +171,7 @@ class GenericVRBoxPointer(BasePointerDevice):
 
     def executa_acao(self, botao, state):
         ow = self._ctx.overlay_window
-        current_mode = ow.current_mode()
+        current_mode = self._ctx.current_mode
         match botao:
             case "G1":
                 if current_mode == MODE_MOUSE:
@@ -180,16 +183,28 @@ class GenericVRBoxPointer(BasePointerDevice):
             case "G1+long":
                 self._ctx.ui.hotkey("shift", "f5")
             case "G1+repeat":
-                ow.change_spot_radius(+1) if current_mode == MODE_SPOTLIGHT else ow.change_laser_size(+1)
+                (
+                    ow.change_spot_radius(+1)
+                    if current_mode == MODE_SPOTLIGHT
+                    else ow.change_laser_size(+1)
+                )
             case "G2":
                 if current_mode == MODE_MOUSE:
                     self._ctx.ui.key("pageup")
                 elif current_mode == MODE_LASER:
                     ow.next_color(-1)
             case "G2+long":
-                ow.set_mouse_mode() if current_mode != MODE_MOUSE else ow.set_last_pointer_mode()
+                (
+                    ow.set_mouse_mode()
+                    if current_mode != MODE_MOUSE
+                    else ow.set_last_pointer_mode()
+                )
             case "G2+repeat":
-                ow.change_spot_radius(-1) if current_mode == MODE_SPOTLIGHT else ow.change_laser_size(-1)
+                (
+                    ow.change_spot_radius(-1)
+                    if current_mode == MODE_SPOTLIGHT
+                    else ow.change_laser_size(-1)
+                )
             case "B":
                 if current_mode == MODE_MOUSE:
                     self._ctx.ui.key("b")

@@ -10,7 +10,8 @@ from spotpress.baseusorangedotai import BaseusOrangeDotAI
 from spotpress.virtualdevice import VirtualPointer
 
 
-DEVICE_CLASSES = {BaseusOrangeDotAI, GenericVRBoxPointer, VirtualPointer}
+# DEVICE_CLASSES = {BaseusOrangeDotAI, GenericVRBoxPointer, VirtualPointer}
+DEVICE_CLASSES = {BaseusOrangeDotAI, GenericVRBoxPointer}
 
 
 class DeviceMonitor:

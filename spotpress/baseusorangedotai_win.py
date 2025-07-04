@@ -1,7 +1,9 @@
 import time
+
 # import uinput
 import threading
 import os
+
 # import evdev.ecodes as ec
 
 from spotpress.utils import (
@@ -368,7 +370,7 @@ class BaseusOrangeDotAI(BasePointerDevice):
 
     def executa_acao(self, button):
         ow = self._ctx.overlay_window
-        current_mode = self._ctx.overlay_window.current_mode()
+        current_mode = self._ctx.current_mode
 
         # self._ctx.log(f"{button}")
         match button:

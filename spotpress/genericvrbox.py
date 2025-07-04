@@ -166,20 +166,20 @@ class GenericVRBoxPointer(BasePointerDevice):
 
     def executa_acao(self, botao, state):
         ow = self._ctx.overlay_window
-        current_mode = self._ctx.overlay_window.current_mode()
+        current_mode = self._ctx.current_mode
         match botao:
             case "G1+G2":
                 pass
             case "G1":
                 if current_mode == MODE_MOUSE:
-                    self.emit_key_press(self._ctx.ui, uinput.KEY_PAGEDOWN)
+                    self.emit_key_press(uinput.KEY_PAGEDOWN)
                 elif current_mode in [MODE_LASER]:
                     ow.next_color()
             case "G1++":
                 if current_mode in [MODE_LASER]:
                     ow.next_color()
             case "G1+long":
-                self.emit_key_chord(self._ctx.ui, [uinput.KEY_LEFTSHIFT, uinput.KEY_F5])
+                self.emit_key_chord([uinput.KEY_LEFTSHIFT, uinput.KEY_F5])
             case "G1+repeat":
                 if current_mode == MODE_SPOTLIGHT:
                     ow.change_spot_radius(+1)
@@ -187,7 +187,7 @@ class GenericVRBoxPointer(BasePointerDevice):
                     ow.change_laser_size(+1)
             case "G2":
                 if current_mode == MODE_MOUSE:
-                    self.emit_key_press(self._ctx.ui, uinput.KEY_PAGEUP)
+                    self.emit_key_press(uinput.KEY_PAGEUP)
 
                 elif current_mode in [MODE_LASER]:
                     ow.next_color(-1)
@@ -198,7 +198,8 @@ class GenericVRBoxPointer(BasePointerDevice):
                 if current_mode != MODE_MOUSE:
                     ow.set_mouse_mode()
                 else:
-                    ow.set_last_pointer_mode()
+                    pass
+                    # ow.set_last_pointer_mode()
             case "G2+repeat":
                 if current_mode == MODE_SPOTLIGHT:
                     ow.change_spot_radius(-1)
@@ -212,7 +213,7 @@ class GenericVRBoxPointer(BasePointerDevice):
                 pass
             case "B":
                 if current_mode == MODE_MOUSE:
-                    self.emit_key_press(self._ctx.ui, uinput.KEY_B)
+                    self.emit_key_press(uinput.KEY_B)
             case "B++":
                 pass
             case "B+long":

@@ -368,7 +368,7 @@ class BaseusOrangeDotAI(BasePointerDevice):
 
     def executa_acao(self, button):
         ow = self._ctx.overlay_window
-        current_mode = self._ctx.overlay_window.current_mode()
+        current_mode = self._ctx.current_mode
 
         # self._ctx.log(f"{button}")
         match button:
@@ -430,7 +430,7 @@ class BaseusOrangeDotAI(BasePointerDevice):
                     elif current_mode == MODE_PEN:
                         ow.next_pen_color(+1)
                     elif current_mode == MODE_SPOTLIGHT:
-                        ow.set_overlay_color_white()
+                        ow.change_overlay_color()
             case "MIC++":
                 pass
             case "MIC+hold":
@@ -447,7 +447,7 @@ class BaseusOrangeDotAI(BasePointerDevice):
                     elif current_mode == MODE_PEN:
                         ow.next_pen_color(-1)
                     elif current_mode == MODE_SPOTLIGHT:
-                        ow.set_overlay_color_black()
+                        ow.change_overlay_color()
             case "LNG++":
                 pass
             case "LNG+hold":
@@ -474,9 +474,9 @@ class BaseusOrangeDotAI(BasePointerDevice):
                 elif current_mode == MODE_MAG_GLASS:
                     ow.zoom(+1)
                 if current_mode == MODE_LASER:
-                    ow.change_laser_size(+10)
+                    ow.change_laser_size(+1)
                 if current_mode == MODE_SPOTLIGHT:
-                    ow.change_spot_radius(+5)
+                    ow.change_spot_radius(+1)
             case "VOL_UP+repeat":
                 if current_mode == MODE_PEN:
                     ow.change_line_width(+1)
@@ -490,9 +490,9 @@ class BaseusOrangeDotAI(BasePointerDevice):
                 elif current_mode == MODE_MAG_GLASS:
                     ow.zoom(-1)
                 if current_mode == MODE_LASER:
-                    ow.change_laser_size(-10)
+                    ow.change_laser_size(-1)
                 if current_mode == MODE_SPOTLIGHT:
-                    ow.change_spot_radius(-5)
+                    ow.change_spot_radius(-1)
 
             case "VOL_DOWN+hold":
                 self.start_hold_repeat("VOL_DOWN")
@@ -537,10 +537,10 @@ class BaseusOrangeDotAI(BasePointerDevice):
                     ec.KEY_VOLUMEUP
                     | ec.KEY_VOLUMEDOWN
                     | ec.KEY_B
-                    | ec.KEY_E
                     | ec.KEY_PAGEDOWN
                     | ec.KEY_PAGEUP
                     # | ec.KEY_LEFTSHIFT
+                    # | ec.KEY_E
                     # | ec.KEY_F5
                     # | ec.KEY_ESC
                     # | ec.KEY_TAB

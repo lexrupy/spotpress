@@ -1,5 +1,8 @@
 import sys
-from screeninfo import get_monitors
+import os
+import configparser
+
+# from screeninfo import get_monitors
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import (
     QAction,
@@ -23,14 +26,23 @@ from PyQt5.QtWidgets import (
     QListWidget,
     QMainWindow,
     QGroupBox,
-    QDesktopWidget
+    QDesktopWidget,
 )
-from PyQt5.QtGui import QGuiApplication, QIcon, QPainter, QPixmap, QColor
+from PyQt5.QtGui import QCursor, QGuiApplication, QIcon, QPainter, QPixmap, QColor
 from PyQt5.QtCore import Qt, pyqtSignal, QTimer
 from spotpress.appcontext import AppContext
 from spotpress.spotlight import SpotlightOverlayWindow
 from spotpress.infoverlay import InfOverlayWindow
-from spotpress.utils import capture_monitor_screenshot
+from spotpress.utils import (
+    LASER_COLORS,
+    MODE_MAP,
+    PEN_COLORS,
+    SHADE_COLORS,
+    capture_monitor_screenshot,
+)
+
+
+CONFIG_PATH = os.path.expanduser("~/.config/spotpress/config.ini")
 
 WINDOWS_OS = False
 if sys.platform.startswith("win"):
@@ -38,24 +50,6 @@ if sys.platform.startswith("win"):
     from spotpress.devices_win import DeviceMonitor
 else:
     from spotpress.devices import DeviceMonitor
-
-laser_colors = [
-    (QColor(255, 0, 0), "Red"),
-    (QColor(0, 255, 0), "Green"),
-    (QColor(0, 0, 255), "Blue"),
-    (QColor(255, 0, 255), "Magenta"),
-    (QColor(255, 255, 0), "Yellow"),
-    (QColor(0, 255, 255), "Cyan"),
-    (QColor(255, 165, 0), "Orange"),
-    (QColor(255, 255, 255), "White"),
-    (QColor(0, 0, 0), "Black"),
-    (QColor(0, 0, 0, 0), "Transparent"),
-]
-
-pen_colors = laser_colors[:-1]
-
-# shade_colors = ["black", "dimgray", "gray", "lightgray", "gainsboro", "white"]
-shade_colors = ["black", "white"]
 
 
 def create_color_combobox(colors):
@@ -71,27 +65,45 @@ def create_named_color_combobox(named_colors):
     combo = QComboBox()
     for value in named_colors:
         pixmap = QPixmap(16, 16)
-        pixmap.fill(QColor(value))
-        combo.addItem(QIcon(pixmap), value)
+        pixmap.fill(QColor(value[0]))
+        combo.addItem(QIcon(pixmap), value[1])
     return combo
 
 
 class SpotpressPreferences(QMainWindow):
     log_signal = pyqtSignal(str)
     info_signal = pyqtSignal(str)
+    change_screen_signal = pyqtSignal(int)
     refresh_devices_signal = pyqtSignal()
 
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Spotpress preferences dialog")
         self.setGeometry(100, 100, 650, 550)
+        self.ui_started_up = False
 
         # Quando fechar a janela, ao invés de fechar, esconder
         self.setWindowFlags(self.windowFlags() | Qt.WindowMinimizeButtonHint)
         if WINDOWS_OS:
             self.setMinimumSize(650, 760)
         else:
-            self.setMinimumSize(650, 640)
+            self.setMinimumSize(800, 680)
+
+        self._ctx = AppContext(
+            screen_index=0,
+            log_function=self.thread_safe_log,
+            show_info_function=self.thread_safe_info,
+            change_screen_function=self.thread_safe_change_screen,
+            main_window=self,
+        )
+
+        self._ctx.windows_os = WINDOWS_OS
+
+        # Reverter MODE_MAP para obter nome -> valor
+        self.MODE_NAME_TO_ID = {v: k for k, v in MODE_MAP.items()}
+
+        # Lista default com todos habilitados
+        self.default_modes = [(name, True) for name in self.MODE_NAME_TO_ID.keys()]
 
         self.tabs = QTabWidget()
         self.preferences_tab = QWidget()
@@ -127,15 +139,6 @@ class SpotpressPreferences(QMainWindow):
 
         # Functional Startups
 
-        self._ctx = AppContext(
-            selected_screen=0,
-            log_function=self.thread_safe_log,
-            show_info_function=self.thread_save_info,
-            main_window=self,
-        )
-
-        self._ctx.windows_os = WINDOWS_OS
-
         self.tray_icon = None
         self.create_tray_icon()
 
@@ -146,12 +149,24 @@ class SpotpressPreferences(QMainWindow):
         # if len(QGuiApplication.screens()) >= 1:
         self.create_information_overlay()
 
-        # For Now Reset
-        self.refresh_screens()
+        self.ui_started_up = True
         self.load_config()
+
+        if self.modes_list.count() == 0:
+            for name, enabled in self.default_modes:
+                item = QListWidgetItem(name)
+                item.setFlags(
+                    item.flags()
+                    | Qt.ItemIsUserCheckable
+                    | Qt.ItemIsEnabled
+                    | Qt.ItemIsSelectable
+                )
+                item.setCheckState(Qt.Checked if enabled else Qt.Unchecked)
+                self.modes_list.addItem(item)
 
         self.log_signal.connect(self.append_log)
         self.info_signal.connect(self.show_info)
+        self.change_screen_signal.connect(self.change_screen)
 
         self.device_monitor = DeviceMonitor(self._ctx)
         self.device_monitor.start_monitoring()
@@ -180,7 +195,8 @@ class SpotpressPreferences(QMainWindow):
             self.on_spotlight_shape_changed
         )
         self.spotlight_size = QSpinBox()
-        self.spotlight_size.setMaximum(75)
+        self.spotlight_size.setMaximum(99)
+        self.spotlight_size.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         self.spotlight_size.valueChanged.connect(self.on_spotlight_size_changed)
         self.spotlight_shade = QCheckBox("Show shade")
         self.spotlight_shade.stateChanged.connect(self.on_spotlight_shade_changed)
@@ -193,7 +209,7 @@ class SpotpressPreferences(QMainWindow):
         spotlight_layout.addWidget(self.spotlight_shape, 0, 1, 1, 2)
         spotlight_layout.addWidget(QLabel("Size:"), 1, 0)
         spotlight_layout.addWidget(self.spotlight_size, 1, 1)
-        spotlight_layout.addWidget(QLabel("% of screen height"), 1, 2)
+        spotlight_layout.addWidget(QLabel("% of screen heigth"), 1, 2)
         spotlight_layout.addWidget(self.spotlight_shade, 2, 0, 1, 2)
         spotlight_layout.addWidget(self.spotlight_border, 2, 2)
         spotlight_group.setLayout(spotlight_layout)
@@ -206,13 +222,14 @@ class SpotpressPreferences(QMainWindow):
         self.magnify_shape.addItem("Rectangle")
         self.magnify_shape.currentIndexChanged.connect(self.on_magnify_shape_changed)
         self.magnify_size = QSpinBox()
-        self.magnify_size.setMaximum(75)
         self.magnify_size.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         self.magnify_size.valueChanged.connect(self.on_magnify_size_changed)
         self.magnify_border = QCheckBox("Show border")
         self.magnify_border.stateChanged.connect(self.on_magnify_border_changed)
-        self.magnify_zoom = QComboBox()
-        self.magnify_zoom.currentIndexChanged.connect(self.on_magnify_zoom_changed)
+        self.magnify_zoom = QSpinBox()
+        self.magnify_zoom.setMaximum(5)
+        self.magnify_zoom.setMinimum(2)
+        self.magnify_zoom.valueChanged.connect(self.on_magnify_zoom_changed)
 
         magnify_group = make_group("Magnifyer")
         magnify_layout = QGridLayout()
@@ -232,7 +249,7 @@ class SpotpressPreferences(QMainWindow):
 
         self.laser_dot_size.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         self.laser_dot_size.valueChanged.connect(self.on_laser_dot_size_changed)
-        self.laser_color = create_color_combobox(laser_colors)
+        self.laser_color = create_color_combobox(LASER_COLORS)
         self.laser_color.currentIndexChanged.connect(self.on_laser_color_changed)
         self.laser_opacity = QSpinBox()
 
@@ -246,7 +263,7 @@ class SpotpressPreferences(QMainWindow):
         laser_layout = QGridLayout()
         laser_layout.addWidget(QLabel("Dot size:"), 0, 0)
         laser_layout.addWidget(self.laser_dot_size, 0, 1)
-        laser_layout.addWidget(QLabel("%"), 0, 2)
+        laser_layout.addWidget(QLabel("% of screen height"), 0, 2)
         laser_layout.addWidget(QLabel("Dot color:"), 1, 0)
         laser_layout.addWidget(self.laser_color, 1, 1, 1, 2)
         laser_layout.addWidget(QLabel("Opacity:"), 2, 0)
@@ -261,7 +278,7 @@ class SpotpressPreferences(QMainWindow):
 
         self.marker_width.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         self.marker_width.valueChanged.connect(self.on_marker_width_changed)
-        self.marker_color = create_color_combobox(pen_colors)
+        self.marker_color = create_color_combobox(PEN_COLORS)
         self.marker_color.currentIndexChanged.connect(self.on_marker_color_changed)
         self.marker_opacity = QSpinBox()
 
@@ -282,7 +299,7 @@ class SpotpressPreferences(QMainWindow):
         right_layout.addWidget(marker_group)
 
         # Shade
-        self.shade_color = create_named_color_combobox(shade_colors)
+        self.shade_color = create_named_color_combobox(SHADE_COLORS)
         self.shade_color.currentIndexChanged.connect(self.on_shade_color_changed)
         self.shade_opacity = QSpinBox()
 
@@ -300,7 +317,7 @@ class SpotpressPreferences(QMainWindow):
         right_layout.addWidget(shade_group)
 
         # Border
-        self.border_color = create_color_combobox(pen_colors)
+        self.border_color = create_color_combobox(PEN_COLORS)
         self.border_color.currentIndexChanged.connect(self.on_border_color_changed)
         self.border_opacity = QSpinBox()
 
@@ -323,21 +340,15 @@ class SpotpressPreferences(QMainWindow):
         border_layout.addWidget(QLabel("pixels"), 2, 2)
         border_group.setLayout(border_layout)
         right_layout.addWidget(border_group)
+
         # General abaixo
         general_group = make_group("General")
-        general_layout = QVBoxLayout()
-        general_check_widget = QWidget()
-        general_button_widget = QWidget()
-        general_check_layout = QHBoxLayout()
-        general_button_layout = QHBoxLayout()
-        general_check_widget.setLayout(general_check_layout)
-        general_button_widget.setLayout(general_button_layout)
+        general_layout = QHBoxLayout()
 
-        self.reset_button = QPushButton("Reset Settings")
-        self.reset_button.clicked.connect(self.on_reset_clicked)
-        self.test_button = QPushButton("Show Test...")
-        self.test_button.clicked.connect(self.on_test_clicked)
+        # Lado esquerdo com checkboxes e botões
+        left_side = QVBoxLayout()
 
+        checkbox_layout = QHBoxLayout()
         self.general_always_capture_screenshot = QCheckBox("Always capture screenshot")
         self.general_always_capture_screenshot.stateChanged.connect(
             self.on_general_always_capture_screenshot_changed
@@ -346,15 +357,33 @@ class SpotpressPreferences(QMainWindow):
         self.general_enable_auto_mode.stateChanged.connect(
             self.on_general_enable_auto_mode_changed
         )
-        general_check_layout.addWidget(self.general_always_capture_screenshot)
-        general_check_layout.addWidget(self.general_enable_auto_mode)
+        checkbox_layout.addWidget(self.general_always_capture_screenshot)
+        checkbox_layout.addWidget(self.general_enable_auto_mode)
 
-        general_button_layout.addWidget(self.reset_button)
-        general_button_layout.addWidget(self.test_button)
+        button_layout = QHBoxLayout()
+        self.reset_button = QPushButton("Reset Settings")
+        self.reset_button.clicked.connect(self.on_reset_clicked)
+        self.test_button = QPushButton("Show Test...")
+        self.test_button.clicked.connect(self.on_test_clicked)
+        button_layout.addWidget(self.reset_button)
+        button_layout.addWidget(self.test_button)
 
-        general_layout.addWidget(general_check_widget)
-        general_layout.addWidget(general_button_widget)
+        left_side.addLayout(checkbox_layout)
+        left_side.addLayout(button_layout)
 
+        # Lado direito com a lista de modos
+        self.modes_list = QListWidget()
+        self.modes_list.setSelectionMode(QListWidget.SingleSelection)
+        self.modes_list.setDragDropMode(QListWidget.InternalMove)
+        self.modes_list.setDefaultDropAction(Qt.MoveAction)
+
+        right_side = QVBoxLayout()
+        right_side.addWidget(QLabel("Enabled Modes (drag to reorder):"))
+        right_side.addWidget(self.modes_list)
+
+        # Junta os lados
+        general_layout.addLayout(left_side)
+        general_layout.addLayout(right_side)
         general_group.setLayout(general_layout)
 
         main_layout.addLayout(self._side_by_side_layout(left_layout, right_layout))
@@ -369,17 +398,6 @@ class SpotpressPreferences(QMainWindow):
 
     def init_devices_tab(self):
         layout = QVBoxLayout()
-        screen_group = QGroupBox("Screens")
-        screen_layout = QHBoxLayout()
-        self.screen_list = QListWidget()
-        self.refresh_button = QPushButton("Refresh")
-        self.refresh_button.clicked.connect(self.on_refresh_clicked)
-        self.screen_list.currentItemChanged.connect(self.on_screen_changed)
-        self.screen_list.setMaximumHeight(70)
-        screen_layout.addWidget(self.screen_list)
-        screen_layout.addWidget(self.refresh_button)
-        screen_group.setLayout(screen_layout)
-        layout.addWidget(screen_group)
 
         self.devices_list = QListWidget()
 
@@ -402,8 +420,6 @@ class SpotpressPreferences(QMainWindow):
         button_layout.addWidget(clear_btn)
         layout.addLayout(button_layout)
         self.log_tab.setLayout(layout)
-
-
 
     def center_on_screen(self):
         # Get the screen's available geometry
@@ -483,7 +499,7 @@ class SpotpressPreferences(QMainWindow):
         all_screens = QGuiApplication.screens()
         target_index = 0
         if len(all_screens) > 1:
-            target_index = 1 if self._ctx.selected_screen == 0 else 0
+            target_index = 1 if self._ctx.screen_index == 0 else 0
 
         geometry = all_screens[target_index].geometry()
         if self._ctx.info_overlay:
@@ -491,26 +507,17 @@ class SpotpressPreferences(QMainWindow):
         self._ctx.info_overlay = InfOverlayWindow(geometry)
 
     def create_spotlight_overlay(self):
-        screen_index = self._ctx.selected_screen
+        screen_index = self._ctx.screen_index
         screenshot, geometry = capture_monitor_screenshot(screen_index)
         if self._ctx.overlay_window:
-            self._ctx.overlay_window.monitor_index = screen_index
+            self._ctx.screen_index = screen_index
             self._ctx.overlay_window.setGeometry(geometry)
         else:
             self._ctx.overlay_window = SpotlightOverlayWindow(
                 context=self._ctx,
                 screenshot=screenshot,
                 screen_geometry=geometry,
-                monitor_index=screen_index,
             )
-
-        self._ctx.overlay_window.load_config()
-
-    def load_config(self):
-        pass
-
-    def save_config(self):
-        pass
 
     def show_normal(self):
         self.show()
@@ -542,29 +549,14 @@ class SpotpressPreferences(QMainWindow):
     def thread_safe_log(self, message):
         self.log_signal.emit(message)
 
-    def thread_save_info(self, message):
+    def thread_safe_info(self, message):
         self.info_signal.emit(message)
+
+    def thread_safe_change_screen(self, screen_index):
+        self.change_screen_signal.emit(screen_index)
 
     def emit_refresh_devices_signal(self):
         self.refresh_devices_signal.emit()
-
-    def refresh_screens(self):
-        current_index = self.screen_list.currentRow()
-        non_primary_index = None
-        self.screens = get_monitors()
-        self.screen_list.clear()
-        for i, m in enumerate(self.screens):
-            text = f"{i}: {m.width}x{m.height} @ {m.x},{m.y}"
-            if m.is_primary:
-                text += " [Primário]"
-            else:
-                non_primary_index = i
-            self.screen_list.addItem(text)
-        # Seleciona o primeiro monitor que não for primário
-        if non_primary_index is not None:
-            self.screen_list.setCurrentRow(non_primary_index)
-        elif self.screen_list.count() > 0:
-            self.screen_list.setCurrentRow(0)  # Fallback: seleciona o primeiro
 
     # Métodos de eventos (placeholders)
     def on_quit_clicked(self):
@@ -580,74 +572,72 @@ class SpotpressPreferences(QMainWindow):
         self.append_log("Janela oculta. Clique no ícone da bandeja para restaurar.")
 
     def on_spotlight_shape_changed(self):
-        pass
+        self.update_context_config()
 
     def on_spotlight_size_changed(self):
-        pass
+        self.update_context_config()
 
     def on_spotlight_shade_changed(self):
-        pass
+        self.update_context_config()
 
     def on_spotlight_border_changed(self):
-        pass
+        self.update_context_config()
 
     def on_magnify_shape_changed(self):
-        pass
+        self.update_context_config()
 
     def on_magnify_size_changed(self):
-        pass
+        self.update_context_config()
 
     def on_magnify_border_changed(self):
-        pass
+        self.update_context_config()
 
     def on_magnify_zoom_changed(self):
-        pass
+        self.update_context_config()
 
     def on_laser_dot_size_changed(self):
-        pass
+        self.update_context_config()
 
     def on_laser_color_changed(self):
-        pass
+        self.update_context_config()
 
     def on_laser_opacity_changed(self):
-        pass
+        self.update_context_config()
 
     def on_laser_reflection_changed(self):
-        pass
+        self.update_context_config()
 
     def on_marker_width_changed(self):
-        pass
+        self.update_context_config()
 
     def on_marker_color_changed(self):
-        pass
+        self.update_context_config()
 
     def on_marker_opacity_changed(self):
-        pass
+        self.update_context_config()
 
     def on_shade_color_changed(self):
-        pass
+        self.update_context_config()
 
     def on_shade_opacity_changed(self):
-        pass
+        self.update_context_config()
 
     def on_border_color_changed(self):
-        pass
+        self.update_context_config()
 
     def on_border_opacity_changed(self):
-        pass
+        self.update_context_config()
 
     def on_border_width_changed(self):
-        pass
+        self.update_context_config()
 
     def on_refresh_clicked(self):
         self.refresh_screens()
 
-    def on_screen_changed(self):
-        idx = self.screen_list.currentRow()
-        self._ctx.selected_screen = idx
+    def change_screen(self, screen_index):
         self.create_spotlight_overlay()
         self.create_information_overlay()
-        self.append_log(f"> Tela selecionada: {idx}")
+        self.append_log(f"> Tela selecionada: {screen_index}")
 
     def on_general_always_capture_screenshot_changed(self):
         pass
@@ -684,9 +674,205 @@ class SpotpressPreferences(QMainWindow):
             self.general_always_capture_screenshot.setChecked(True)
             self.general_enable_auto_mode.setChecked(True)
 
-    def on_test_clicked(self):
-        self._ctx.overlay_window.set_spotlight_mode()
+    def load_config(self):
+        config = configparser.ConfigParser()
+        if not os.path.exists(CONFIG_PATH):
+            return
 
+        config.read(CONFIG_PATH)
+
+        def getint(section, key, fallback):
+            return int(config.get(section, key, fallback=str(fallback)))
+
+        def getbool(section, key, fallback):
+            return config.getboolean(section, key, fallback=fallback)
+
+        def getindex_by_text(combo, text):
+            for i in range(combo.count()):
+                if combo.itemText(i).lower() == text.lower():
+                    return i
+            return 0
+
+        try:
+            self.spotlight_shape.setCurrentIndex(
+                getindex_by_text(
+                    self.spotlight_shape,
+                    config.get("Spotlight", "shape", fallback="elipse"),
+                )
+            )
+            self.spotlight_size.setValue(getint("Spotlight", "size", 35))
+            self.spotlight_shade.setChecked(getbool("Spotlight", "shade", True))
+            self.spotlight_border.setChecked(getbool("Spotlight", "border", True))
+
+            self.magnify_shape.setCurrentIndex(
+                getindex_by_text(
+                    self.magnify_shape,
+                    config.get("Magnify", "shape", fallback="rectangle"),
+                )
+            )
+            self.magnify_size.setValue(getint("Magnify", "size", 35))
+            self.magnify_border.setChecked(getbool("Magnify", "border", True))
+            self.magnify_zoom.setValue(getint("Magnify", "zoom", 2))
+
+            self.laser_dot_size.setValue(getint("Laser", "dot_size", 20))
+            self.laser_color.setCurrentIndex(getint("Laser", "color_index", 0))
+            self.laser_opacity.setValue(getint("Laser", "opacity", 10))
+            self.laser_reflection.setChecked(getbool("Laser", "reflection", True))
+
+            self.marker_width.setValue(getint("Marker", "width", 20))
+            self.marker_color.setCurrentIndex(getint("Marker", "color_index", 1))
+            self.marker_opacity.setValue(getint("Marker", "opacity", 0))
+
+            self.shade_color.setCurrentIndex(getint("Shade", "color_index", 0))
+            self.shade_opacity.setValue(getint("Shade", "opacity", 5))
+
+            self.border_color.setCurrentIndex(getint("Border", "color_index", 7))
+            self.border_opacity.setValue(getint("Border", "opacity", 90))
+            self.border_width.setValue(getint("Border", "width", 16))
+
+            self.general_always_capture_screenshot.setChecked(
+                getbool("General", "always_capture", True)
+            )
+            self.general_enable_auto_mode.setChecked(
+                getbool("General", "auto_mode", True)
+            )
+
+            self.modes_list.clear()
+            mode_id_to_name = MODE_MAP
+            i = 0
+            while True:
+                key = f"mode{i}"
+                if "Modes" not in config or key not in config["Modes"]:
+                    break
+                try:
+                    raw = config["Modes"][key]
+                    mode_id_str, enabled_str = raw.split("|")
+                    mode_id = int(mode_id_str)
+                    enabled = bool(int(enabled_str))
+                    name = mode_id_to_name.get(mode_id, f"Unknown({mode_id})")
+                    item = QListWidgetItem(name)
+                    item.setFlags(
+                        item.flags()
+                        | Qt.ItemIsUserCheckable
+                        | Qt.ItemIsEnabled
+                        | Qt.ItemIsSelectable
+                    )
+                    item.setCheckState(Qt.Checked if enabled else Qt.Unchecked)
+                    self.modes_list.addItem(item)
+                except Exception as e:
+                    self.append_log(f"Erro ao carregar modo '{raw}': {e}")
+                i += 1
+
+            current_mode = config.getint("Modes", "current_mode", fallback=0)
+            self._ctx.current_mode = current_mode  # armazena no contexto se quiser
+
+            # Seleciona o item correspondente na lista
+            for i in range(self.modes_list.count()):
+                item = self.modes_list.item(i)
+                name = item.text()
+                mode_id = self.MODE_NAME_TO_ID.get(name)
+                if mode_id == current_mode:
+                    self.modes_list.setCurrentRow(i)
+                    break
+
+        except Exception as e:
+            print("Erro ao carregar configurações:", e)
+
+        self.update_context_config()
+
+    def save_config(self):
+        config = configparser.ConfigParser()
+
+        config["Spotlight"] = {
+            "shape": self.spotlight_shape.currentText(),
+            "size": str(self.spotlight_size.value()),
+            "shade": str(self.spotlight_shade.isChecked()),
+            "border": str(self.spotlight_border.isChecked()),
+        }
+        config["Magnify"] = {
+            "shape": self.magnify_shape.currentText(),
+            "size": str(self.magnify_size.value()),
+            "border": str(self.magnify_border.isChecked()),
+            "zoom": str(self.magnify_zoom.value()),
+        }
+        config["Laser"] = {
+            "dot_size": str(self.laser_dot_size.value()),
+            "color_index": str(self.laser_color.currentIndex()),
+            "opacity": str(self.laser_opacity.value()),
+            "reflection": str(self.laser_reflection.isChecked()),
+        }
+        config["Marker"] = {
+            "width": str(self.marker_width.value()),
+            "color_index": str(self.marker_color.currentIndex()),
+            "opacity": str(self.marker_opacity.value()),
+        }
+        config["Shade"] = {
+            "color_index": str(self.shade_color.currentIndex()),
+            "opacity": str(self.shade_opacity.value()),
+        }
+        config["Border"] = {
+            "color_index": str(self.border_color.currentIndex()),
+            "opacity": str(self.border_opacity.value()),
+            "width": str(self.border_width.value()),
+        }
+        config["General"] = {
+            "always_capture": str(self.general_always_capture_screenshot.isChecked()),
+            "auto_mode": str(self.general_enable_auto_mode.isChecked()),
+        }
+
+        config["Modes"] = {}
+
+        for i in range(self.modes_list.count()):
+            item = self.modes_list.item(i)
+            name = item.text()
+            mode_id = self.MODE_NAME_TO_ID.get(name)
+            if mode_id is not None:
+                enabled = item.checkState() == Qt.Checked
+                config["Modes"][f"mode{i}"] = f"{mode_id}|{int(enabled)}"
+
+        selected_items = self.modes_list.selectedItems()
+        if selected_items:
+            selected_name = selected_items[0].text()
+            current_id = self.MODE_NAME_TO_ID.get(selected_name)
+            if current_id is not None:
+                config["Modes"]["current_mode"] = str(current_id)
+
+        os.makedirs(os.path.dirname(CONFIG_PATH), exist_ok=True)
+        with open(CONFIG_PATH, "w") as configfile:
+            config.write(configfile)
+
+    def update_context_config(self):
+        if self._ctx and self.ui_started_up:
+            cfg = self._ctx.config
+            cfg["spotlight_shape"] = self.spotlight_shape.currentText()
+            cfg["spotlight_size"] = self.spotlight_size.value()
+            cfg["spotlight_shade"] = self.spotlight_shade.isChecked()
+            cfg["spotlight_border"] = self.spotlight_border.isChecked()
+            cfg["magnify_shape"] = self.magnify_shape.currentText()
+            cfg["magnify_size"] = self.magnify_size.value()
+            cfg["magnify_border"] = self.magnify_border.isChecked()
+            cfg["magnify_zoom"] = self.magnify_zoom.value()
+            cfg["laser_dot_size"] = self.laser_dot_size.value()
+            cfg["laser_color_index"] = self.laser_color.currentIndex()
+            cfg["laser_opacity"] = self.laser_opacity.value()
+            cfg["laser_reflection"] = self.laser_reflection.isChecked()
+            cfg["marker_width"] = self.marker_width.value()
+            cfg["marker_color_index"] = self.marker_color.currentIndex()
+            cfg["marker_opacity"] = self.marker_opacity.value()
+            cfg["shade_color_index"] = self.shade_color.currentIndex()
+            cfg["shade_opacity"] = self.shade_opacity.value()
+            cfg["border_color_index"] = self.border_color.currentIndex()
+            cfg["border_opacity"] = self.border_opacity.value()
+            cfg["border_width"] = self.border_width.value()
+            cfg["general_always_capture"] = (
+                self.general_always_capture_screenshot.isChecked()
+            )
+            cfg["general_auto_mode"] = self.general_enable_auto_mode.isChecked()
+            cfg["modes_current_mode"] = self._ctx.current_mode
+
+    def on_test_clicked(self):
+        if self._ctx.overlay_window:
+            self._ctx.overlay_window.show_overlay()
 
 
 if __name__ == "__main__":

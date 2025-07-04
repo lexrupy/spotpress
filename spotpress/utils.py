@@ -1,7 +1,5 @@
-import mss
-from PyQt5.QtGui import (
-    QImage,
-)
+# import mss
+from PyQt5.QtGui import QColor, QImage, QGuiApplication
 from PyQt5.QtCore import QRect
 
 
@@ -21,40 +19,59 @@ MODE_MAP = {
 }
 
 
+LASER_COLORS = [
+    (QColor(255, 0, 0), "Red"),
+    (QColor(0, 255, 0), "Green"),
+    (QColor(0, 0, 255), "Blue"),
+    (QColor(255, 0, 255), "Magenta"),
+    (QColor(255, 255, 0), "Yellow"),
+    (QColor(0, 255, 255), "Cyan"),
+    (QColor(255, 165, 0), "Orange"),
+    (QColor(255, 255, 255), "White"),
+    (QColor(0, 0, 0), "Black"),
+    # SE INCLUIR MAIS CORES MANTER ESTA A ÚLTIMA
+    (QColor(0, 0, 0, 0), "Transparent"),
+]
+
+PEN_COLORS = LASER_COLORS[:-1]
+
+# shade_colors = ["black", "dimgray", "gray", "lightgray", "gainsboro", "white"]
+SHADE_COLORS = [
+    (QColor(0, 0, 0), "Black"),
+    (QColor(255, 255, 255), "White"),
+]
+
+
+class ObservableDict(dict):
+    def __init__(self, *args, callback=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._callback = callback
+
+    def __setitem__(self, key, value):
+        super().__setitem__(key, value)
+        if self._callback:
+            self._callback(key, value)
+
+
 def pil_to_qimage(pil_img):
     pil_img = pil_img.convert("RGBA")
     data = pil_img.tobytes("raw", "RGBA")
     return QImage(data, pil_img.width, pil_img.height, QImage.Format_RGBA8888)
 
 
-def capture_monitor_screenshot(monitor_index):
-    # with mss.mss() as sct:
-    #     monitors = sct.monitors
-    #     # monitor_index da GUI (0-based) → monitor_index para mss (1-based)
-    #     mss_index = monitor_index + 1
-    #
-    #     if mss_index < 1 or mss_index >= len(monitors):
-    #         mss_index = 1  # fallback para primeiro monitor real
-    #
-    #     mon = monitors[mss_index]
-    #     sct_img = sct.grab(mon)
-    #     img = pil_to_qimage(
-    #         Image.frombytes("RGB", sct_img.size, sct_img.rgb).convert("RGBA")
-    #     )
-    # return img, QRect(mon["left"], mon["top"], mon["width"], mon["height"])
-    with mss.mss() as sct:
-        monitors = sct.monitors
-        mss_index = monitor_index + 1
+def capture_monitor_screenshot(screen_index):
+    app = QGuiApplication.instance()
+    if not app:
+        app = QGuiApplication([])
 
-        if mss_index < 1 or mss_index >= len(monitors):
-            mss_index = 1  # fallback para primeiro monitor real
+    screens = QGuiApplication.screens()
+    if screen_index >= len(screens):
+        screen_index = 0
 
-        mon = monitors[mss_index]
-        sct_img = sct.grab(mon)
+    screen = screens[screen_index]
+    geometry = screen.geometry()
+    screenshot = screen.grabWindow(0)  # Captura toda a tela
 
-        # Converte os dados brutos para QImage (BGRX → RGBA)
-        img = QImage(
-            sct_img.rgb, sct_img.width, sct_img.height, QImage.Format_RGB888
-        ).copy()
-
-    return img, QRect(mon["left"], mon["top"], mon["width"], mon["height"])
+    return screenshot.toImage(), QRect(
+        geometry.left(), geometry.top(), geometry.width(), geometry.height()
+    )
