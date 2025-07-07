@@ -161,9 +161,6 @@ class GenericVRBoxPointer(BasePointerDevice):
         if state["long_pressed"] or state["repeat_active"]:
             return
 
-    def monitor(self):
-        self.start_event_blocking()
-
     def executa_acao(self, botao, state):
         ow = self._ctx.overlay_window
         current_mode = self._ctx.current_mode

@@ -79,7 +79,7 @@ class SpotlightOverlayWindow(QWidget):
         # self.pixmap = QPixmap.fromImage(screenshot)
         self.clear_pixmap()
 
-        self.pen_color = PEN_COLORS[self._ctx.config.get("marker_color_index", 0)]
+        self.pen_color = PEN_COLORS[self._ctx.config.get("marker_color_index", 0)][0]
 
         self.cursor_pos = None  # Usado para exibir a caneta
 

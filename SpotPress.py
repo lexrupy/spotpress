@@ -418,6 +418,7 @@ class SpotpressPreferences(QMainWindow):
         button_layout.addWidget(save_btn)
         button_layout.addStretch()
         button_layout.addWidget(clear_btn)
+        clear_btn.clicked.connect(self.on_clear_log_clicked)
         layout.addLayout(button_layout)
         self.log_tab.setLayout(layout)
 
@@ -644,6 +645,9 @@ class SpotpressPreferences(QMainWindow):
 
     def on_general_enable_auto_mode_changed(self):
         pass
+
+    def on_clear_log_clicked(self):
+        self.log_text.clear()
 
     def on_reset_clicked(self):
         resposta = QMessageBox.question(

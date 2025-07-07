@@ -7,11 +7,12 @@ import uinput
 
 from spotpress.genericvrbox import GenericVRBoxPointer
 from spotpress.baseusorangedotai import BaseusOrangeDotAI
+from spotpress.nordicasasmartcontrol import ASASmartControlPointer
 from spotpress.virtualdevice import VirtualPointer
 
 
 # DEVICE_CLASSES = {BaseusOrangeDotAI, GenericVRBoxPointer, VirtualPointer}
-DEVICE_CLASSES = {BaseusOrangeDotAI, GenericVRBoxPointer}
+DEVICE_CLASSES = {BaseusOrangeDotAI, GenericVRBoxPointer, ASASmartControlPointer}
 
 
 class DeviceMonitor:
