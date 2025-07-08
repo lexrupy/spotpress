@@ -53,7 +53,7 @@ class SpotlightOverlayWindow(QWidget):
         self.setAttribute(Qt.WA_TransparentForMouseEvents)
         self.setCursor(Qt.BlankCursor)
 
-        self._ctx.current_mode = MODE_MOUSE
+        # self._ctx.current_mode = MODE_MOUSE
 
         self._auto_mode_enabled = True
         self._always_take_screenshot = False
