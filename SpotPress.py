@@ -896,10 +896,14 @@ class SpotpressPreferences(QMainWindow):
             cfg["modes_current_mode"] = self._ctx.current_mode
 
     def on_test_clicked(self):
-        self.append_log("test clicked")
+
+        QMessageBox.information(
+            self,
+            "About SpotPress...",
+            "SpotPress: A Spotlight Aplication For Presentations.\nLicenced under LGPL\nContributors:\nAlexandre da Silva <lexrupy>",
+        )
         if self._ctx.overlay_window is not None:
 
-            self.append_log("test clicked not None")
             self._ctx.overlay_window.show_overlay()
 
 
