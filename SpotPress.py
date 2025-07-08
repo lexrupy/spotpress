@@ -515,7 +515,6 @@ class SpotpressPreferences(QMainWindow):
             )
 
     def refresh_screens(self):
-        current_index = self.screen_list.currentRow()
         non_primary_index = None
         self.screens = QApplication.screens()
         self.screen_list.clear()
@@ -658,8 +657,9 @@ class SpotpressPreferences(QMainWindow):
         self.change_screen(idx)
 
     def change_screen(self, screen_index):
+        if self._ctx.screen_index != screen_index:
+            self._ctx.screen_index = screen_index
         self.create_spotlight_overlay()
-
         self.create_information_overlay()
         self.append_log(f"> Tela selecionada: {screen_index}")
 
