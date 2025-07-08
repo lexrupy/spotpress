@@ -160,19 +160,20 @@ class SpotlightOverlayWindow(QWidget):
         # self.close()
 
     def show_overlay(self):
-        screen_index = self.get_screen_index_under_cursor()
-        self._ctx.change_screen(screen_index)
-        if self._ctx.current_mode == MODE_MAG_GLASS:
-            if self._ctx.config["magnify_zoom"] <= self.zoom_min:
-                self._ctx.config["magnify_zoom"] = self.zoom_min
-            self.capture_screenshot()
-        elif self._ctx.current_mode == MODE_LASER and self.laser_inverted():
-            self.capture_screenshot()
-        elif self._ctx.current_mode != MODE_MOUSE:
-            if self._always_take_screenshot:
+        if not self.isVisible():
+            screen_index = self.get_screen_index_under_cursor()
+            self._ctx.change_screen(screen_index)
+            if self._ctx.current_mode == MODE_MAG_GLASS:
+                if self._ctx.config["magnify_zoom"] <= self.zoom_min:
+                    self._ctx.config["magnify_zoom"] = self.zoom_min
                 self.capture_screenshot()
-            else:
-                self.showFullScreen()
+            elif self._ctx.current_mode == MODE_LASER and self.laser_inverted():
+                self.capture_screenshot()
+            elif self._ctx.current_mode != MODE_MOUSE:
+                if self._always_take_screenshot:
+                    self.capture_screenshot()
+                else:
+                    self.showFullScreen()
 
         self.update()
 
@@ -188,8 +189,8 @@ class SpotlightOverlayWindow(QWidget):
             self._ctx.show_info(f"{MODE_MAP[self._ctx.current_mode]}")
 
     def switch_mode(self, step=1, direct_mode=-1):
-        screen_index = self.get_screen_index_under_cursor()
-        self._ctx.change_screen(screen_index)
+        # screen_index = self.get_screen_index_under_cursor()
+        # self._ctx.change_screen(screen_index)
 
         compatible = self._ctx.compatible_modes
         all_modes = list(MODE_MAP.keys())  # usa ordem de definição dos modos
@@ -230,6 +231,8 @@ class SpotlightOverlayWindow(QWidget):
         if new_mode == MODE_MOUSE:
             self.hide_overlay()
         else:
+            if new_mode == MODE_MAG_GLASS:
+                self.capture_screenshot()
             self.show_overlay()
 
     def change_laser_size(self, delta: int):
@@ -314,9 +317,11 @@ class SpotlightOverlayWindow(QWidget):
             self.update()  # atualiza a tela para refletir a mudança, se necessário
 
     def capture_screenshot(self):
+        do_hide = self.isVisible()
+        if do_hide:
+            # Esconde a janela overlay
+            self.hide_overlay()
 
-        # Esconde a janela overlay
-        self.hide_overlay()
         QApplication.processEvents()
         time.sleep(0.5)  # aguardar atualização da tela
 
@@ -326,8 +331,9 @@ class SpotlightOverlayWindow(QWidget):
         # Atualiza o pixmap do overlay (converter QImage para QPixmap)
         self.pixmap = QPixmap.fromImage(qimage)
 
-        # Mostra a janela overlay novamente
-        self.showFullScreen()
+        # Mostra a janela overlay novamente se foi ocultada
+        if do_hide:
+            self.showFullScreen()
 
     def drawMagnifyingGlass(self, painter, cursor_pos):
 
