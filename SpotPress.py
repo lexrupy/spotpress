@@ -502,17 +502,35 @@ class SpotpressPreferences(QMainWindow):
         self._ctx.info_overlay = InfOverlayWindow(geometry)
 
     def create_spotlight_overlay(self):
+        # screen_index = self._ctx.screen_index
+        # screenshot, geometry = capture_monitor_screenshot(screen_index)
+        # if self._ctx.overlay_window:
+        #     self._ctx.screen_index = screen_index
+        #     self._ctx.overlay_window.setGeometry(geometry)
+        # else:
+        #     self._ctx.overlay_window = SpotlightOverlayWindow(
+        #         context=self._ctx,
+        #         screenshot=screenshot,
+        #         screen_geometry=geometry,
+        #     )
+
         screen_index = self._ctx.screen_index
         screenshot, geometry = capture_monitor_screenshot(screen_index)
+        print(
+            f"[DEBUG] screen_index={screen_index}, geometry={geometry}, screenshot is None? {screenshot is None}"
+        )
+
         if self._ctx.overlay_window:
             self._ctx.screen_index = screen_index
             self._ctx.overlay_window.setGeometry(geometry)
+            self._ctx.overlay_window.show()  # Força visibilidade
         else:
             self._ctx.overlay_window = SpotlightOverlayWindow(
                 context=self._ctx,
                 screenshot=screenshot,
                 screen_geometry=geometry,
             )
+            self._ctx.overlay_window.show()
 
     def refresh_screens(self):
         non_primary_index = None
