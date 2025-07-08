@@ -1,7 +1,5 @@
 import os
 import time
-import configparser
-from distutils.util import strtobool
 from PyQt5.QtWidgets import QApplication, QWidget
 from PyQt5.QtGui import (
     QPainter,
@@ -159,6 +157,7 @@ class SpotlightOverlayWindow(QWidget):
     def hide_overlay(self):
         self.clear_pixmap()
         self.hide()
+        # self.close()
 
     def show_overlay(self):
         screen_index = self.get_screen_index_under_cursor()
@@ -174,6 +173,8 @@ class SpotlightOverlayWindow(QWidget):
                 self.capture_screenshot()
             else:
                 self.showFullScreen()
+
+        self.update()
 
     def set_auto_mode(self, enable=True):
         if not self._ctx.support_auto_mode:
@@ -224,31 +225,12 @@ class SpotlightOverlayWindow(QWidget):
         last_mode = self._ctx.current_mode
         if last_mode != new_mode and last_mode == MODE_MAG_GLASS:
             self.clear_pixmap()
-
         self._ctx.current_mode = new_mode
-
         self._ctx.show_info(f"Modo {MODE_MAP[self._ctx.current_mode]}")
-
-        if self.auto_mode_enabled():
-            return
-
-        if self._ctx.current_mode == MODE_MOUSE:
-            self.hide()
-        elif self._ctx.current_mode == MODE_MAG_GLASS:
-            if self._ctx.config["magnify_zoom"] <= self.zoom_min:
-                self._ctx.config["magnify_zoom"] = self.zoom_min
-            self.capture_screenshot()
+        if new_mode == MODE_MOUSE:
+            self.hide_overlay()
         else:
-
-            if self._ctx.current_mode == MODE_LASER and self.laser_inverted():
-                self.capture_screenshot()
-            else:
-                if self._always_take_screenshot:
-                    self.capture_screenshot()
-                else:
-                    self.showFullScreen()
-
-        self.update()
+            self.show_overlay()
 
     def change_laser_size(self, delta: int):
         min_size = 1
@@ -334,7 +316,7 @@ class SpotlightOverlayWindow(QWidget):
     def capture_screenshot(self):
 
         # Esconde a janela overlay
-        self.hide()
+        self.hide_overlay()
         QApplication.processEvents()
         time.sleep(0.5)  # aguardar atualização da tela
 

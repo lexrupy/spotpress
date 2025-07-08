@@ -372,10 +372,13 @@ class ASASmartControlPointer(BasePointerDevice):
                         # Emit if overlay is not visible
                         self._ctx.ui.emit((event.type, event.code), event.value)
                 case ec.BTN_LEFT:
-                    if event.value == 1:
-                        self._is_mouse_down = True
-                        self._mouse_down_time = time.time()
-                        if ow and ow.isVisible():
-                            self.executa_acao("BTN_LEFT")
+                    if self._ctx.current_mode == MODE_MOUSE:
+                        self._ctx.ui.emit((event.type, event.code), event.value)
                     else:
-                        self._is_mouse_down = False
+                        if event.value == 1:
+                            self._is_mouse_down = True
+                            self._mouse_down_time = time.time()
+                            if ow and ow.isVisible():
+                                self.executa_acao("BTN_LEFT")
+                        else:
+                            self._is_mouse_down = False
