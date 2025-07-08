@@ -377,6 +377,7 @@ class SpotpressPreferences(QMainWindow):
         self.modes_list.setSelectionMode(QListWidget.SingleSelection)
         self.modes_list.setDragDropMode(QListWidget.InternalMove)
         self.modes_list.setDefaultDropAction(Qt.MoveAction)
+        self.modes_list.currentRowChanged.connect(self.on_mode_selected)
 
         right_side = QVBoxLayout()
         right_side.addWidget(QLabel("Enabled Modes (drag to reorder):"))
@@ -440,6 +441,17 @@ class SpotpressPreferences(QMainWindow):
         qt_rectangle = self.frameGeometry()
         qt_rectangle.moveCenter(screen_center_point)
         self.move(qt_rectangle.topLeft())
+
+    def on_mode_selected(self, row):
+        if row < 0 or row >= self.modes_list.count():
+            return
+        item = self.modes_list.item(row)
+        name = item.text()
+        mode_id = self.MODE_NAME_TO_ID.get(name)
+        if mode_id is not None:
+            self._ctx.current_mode = mode_id
+            self.append_log(f"> Modo alterado para: {name} (ID: {mode_id})")
+            self.update_context_config()
 
     def on_tray_icon_activated(self, reason):
         if reason == QSystemTrayIcon.Trigger:
@@ -896,14 +908,7 @@ class SpotpressPreferences(QMainWindow):
             cfg["modes_current_mode"] = self._ctx.current_mode
 
     def on_test_clicked(self):
-
-        QMessageBox.information(
-            self,
-            "About SpotPress...",
-            "SpotPress: A Spotlight Aplication For Presentations.\nLicenced under LGPL\nContributors:\nAlexandre da Silva <lexrupy>",
-        )
         if self._ctx.overlay_window is not None:
-
             self._ctx.overlay_window.show_overlay()
 
 
