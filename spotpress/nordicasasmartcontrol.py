@@ -128,7 +128,7 @@ class ASASmartControlPointer(BasePointerDevice):
                 self._auto_mode_active = True
 
     def _reset_auto_mode_timer(self):
-        if self._auto_mode_timer:
+        if self._auto_mode_timer is not None:
             self._auto_mode_timer.cancel()
 
         def timeout_callback():
@@ -235,8 +235,8 @@ class ASASmartControlPointer(BasePointerDevice):
         ow = self._ctx.overlay_window
         current_mode = self._ctx.current_mode
 
-        # if button != "MOUSE_MOVE":
-        #     self._ctx.log(f"EXECUTA ACAO -> {button}")
+        if button != "MOUSE_MOVE":
+            self._ctx.log(f"EXECUTA ACAO -> {button}")
         match button:
             case "TAB":
                 ow.switch_mode()
@@ -246,7 +246,8 @@ class ASASmartControlPointer(BasePointerDevice):
                 ow.set_auto_mode(not ow.auto_mode_enabled())
             case "MOUSE_MOVE":
                 if ow.auto_mode_enabled() and not ow.isVisible():
-                    ow.show_overlay()
+                    pass
+                    # ow.show_overlay()
             case "MOUSE_STOP":
                 if ow.auto_mode_enabled() and ow.isVisible():
                     ow.hide_overlay()

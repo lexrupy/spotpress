@@ -146,10 +146,11 @@ class SpotpressPreferences(QMainWindow):
 
         self.create_spotlight_overlay()
 
-        # if len(QGuiApplication.screens()) >= 1:
         self.create_information_overlay()
 
         self.ui_started_up = True
+
+        self.refresh_screens()
         self.load_config()
 
         if self.modes_list.count() == 0:
@@ -166,6 +167,7 @@ class SpotpressPreferences(QMainWindow):
 
         self.log_signal.connect(self.append_log)
         self.info_signal.connect(self.show_info)
+
         self.change_screen_signal.connect(self.change_screen)
 
         self.device_monitor = DeviceMonitor(self._ctx)
@@ -398,6 +400,17 @@ class SpotpressPreferences(QMainWindow):
 
     def init_devices_tab(self):
         layout = QVBoxLayout()
+        screen_group = QGroupBox("Screens")
+        screen_layout = QHBoxLayout()
+        self.screen_list = QListWidget()
+        self.refresh_button = QPushButton("Refresh")
+        self.refresh_button.clicked.connect(self.on_refresh_clicked)
+        self.screen_list.currentItemChanged.connect(self.on_screen_changed)
+        self.screen_list.setMaximumHeight(70)
+        screen_layout.addWidget(self.screen_list)
+        screen_layout.addWidget(self.refresh_button)
+        screen_group.setLayout(screen_layout)
+        layout.addWidget(screen_group)
 
         self.devices_list = QListWidget()
 
@@ -501,7 +514,8 @@ class SpotpressPreferences(QMainWindow):
         target_index = 0
         if len(all_screens) > 1:
             target_index = 1 if self._ctx.screen_index == 0 else 0
-
+        else:
+            return
         geometry = all_screens[target_index].geometry()
         if self._ctx.info_overlay:
             self._ctx.info_overlay.setGeometry(geometry)
@@ -519,6 +533,26 @@ class SpotpressPreferences(QMainWindow):
                 screenshot=screenshot,
                 screen_geometry=geometry,
             )
+
+    def refresh_screens(self):
+        current_index = self.screen_list.currentRow()
+        non_primary_index = None
+        self.screens = QApplication.screens()
+        self.screen_list.clear()
+        for i, screen in enumerate(self.screens):
+            geom = screen.geometry()
+            x, y, w, h = geom.x(), geom.y(), geom.width(), geom.height()
+            text = f"{i}: {w}x{h} @ {x},{y}"
+            if screen == QApplication.primaryScreen():
+                text += " [Primário]"
+            else:
+                non_primary_index = i
+            self.screen_list.addItem(text)
+        # Seleciona o primeiro monitor que não for primário
+        if non_primary_index is not None:
+            self.screen_list.setCurrentRow(non_primary_index)
+        elif self.screen_list.count() > 0:
+            self.screen_list.setCurrentRow(0)  # Fallback
 
     def show_normal(self):
         self.show()
@@ -635,8 +669,17 @@ class SpotpressPreferences(QMainWindow):
     def on_refresh_clicked(self):
         self.refresh_screens()
 
+    def on_screen_changed(self):
+        idx = self.screen_list.currentRow()
+        # self._ctx.selected_screen = idx
+        # self.create_spotlight_overlay()
+        # self.create_information_overlay()
+        # self.append_log(f"> Tela selecionada: {idx}")
+        self.change_screen(idx)
+
     def change_screen(self, screen_index):
         self.create_spotlight_overlay()
+
         self.create_information_overlay()
         self.append_log(f"> Tela selecionada: {screen_index}")
 
