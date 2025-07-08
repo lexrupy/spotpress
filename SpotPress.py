@@ -896,7 +896,7 @@ class SpotpressPreferences(QMainWindow):
             cfg["modes_current_mode"] = self._ctx.current_mode
 
     def on_test_clicked(self):
-        if self._ctx.overlay_window:
+        if self._ctx.overlay_window is not None:
             self._ctx.overlay_window.show_overlay()
 
 
