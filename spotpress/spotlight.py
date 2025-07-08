@@ -161,8 +161,6 @@ class SpotlightOverlayWindow(QWidget):
 
     def show_overlay(self):
         if not self.isVisible():
-            screen_index = self.get_screen_index_under_cursor()
-            self._ctx.change_screen(screen_index)
             if self._ctx.current_mode == MODE_MAG_GLASS:
                 if self._ctx.config["magnify_zoom"] <= self.zoom_min:
                     self._ctx.config["magnify_zoom"] = self.zoom_min

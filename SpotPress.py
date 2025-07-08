@@ -1,8 +1,6 @@
 import sys
 import os
 import configparser
-
-# from screeninfo import get_monitors
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import (
     QAction,
@@ -28,7 +26,7 @@ from PyQt5.QtWidgets import (
     QGroupBox,
     QDesktopWidget,
 )
-from PyQt5.QtGui import QCursor, QGuiApplication, QIcon, QPainter, QPixmap, QColor
+from PyQt5.QtGui import QGuiApplication, QIcon, QPainter, QPixmap, QColor
 from PyQt5.QtCore import Qt, pyqtSignal, QTimer
 from spotpress.appcontext import AppContext
 from spotpress.spotlight import SpotlightOverlayWindow
@@ -436,24 +434,14 @@ class SpotpressPreferences(QMainWindow):
         self.log_tab.setLayout(layout)
 
     def center_on_screen(self):
-        # Get the screen's available geometry
         screen_geometry = QDesktopWidget().availableGeometry()
-
-        # Get the center point of the screen
         screen_center_point = screen_geometry.center()
-
-        # Get the current geometry of the window
         qt_rectangle = self.frameGeometry()
-
-        # Move the center of the window's rectangle to the screen's center
         qt_rectangle.moveCenter(screen_center_point)
-
-        # Move the window to the top-left corner of the adjusted rectangle
         self.move(qt_rectangle.topLeft())
 
     def on_tray_icon_activated(self, reason):
         if reason == QSystemTrayIcon.Trigger:
-            # Clique simples na bandeja
             if self.isVisible():
                 self.hide()
             else:
@@ -471,11 +459,10 @@ class SpotpressPreferences(QMainWindow):
         self.devices_list.setEnabled(True)
         for dev in devices:
             item = QListWidgetItem(dev.display_name())
-            item.setData(Qt.UserRole, dev)  # Armazena o objeto 'dev'
+            item.setData(Qt.UserRole, dev)
             self.devices_list.addItem(item)
 
     def create_tray_icon(self):
-        # Criar um ícone simples na memória (círculo verde)
         size = 64
         pixmap = QPixmap(size, size)
         pixmap.fill(Qt.transparent)
@@ -486,26 +473,19 @@ class SpotpressPreferences(QMainWindow):
         painter.end()
 
         icon = QIcon(pixmap)
-
         self.tray_icon = QSystemTrayIcon(icon, self)
         menu = QMenu()
-
         restore_action = QAction("Restaurar", self)
         restore_action.triggered.connect(self.show_normal)
         menu.addAction(restore_action)
-
         about_action = QAction("About...", self)
         about_action.triggered.connect(self.show_about)
         menu.addAction(about_action)
-
         exit_action = QAction("Sair", self)
         exit_action.triggered.connect(self.on_quit_clicked)
         menu.addAction(exit_action)
-
         self.tray_icon.setContextMenu(menu)
-
         self.tray_icon.activated.connect(self.on_tray_icon_activated)
-
         self.tray_icon.show()
 
     def create_information_overlay(self):
@@ -551,8 +531,12 @@ class SpotpressPreferences(QMainWindow):
         # Seleciona o primeiro monitor que não for primário
         if non_primary_index is not None:
             self.screen_list.setCurrentRow(non_primary_index)
+            selected_index = non_primary_index
         elif self.screen_list.count() > 0:
+            selected_index = 0
             self.screen_list.setCurrentRow(0)  # Fallback
+
+        self.change_screen(selected_index)
 
     def show_normal(self):
         self.show()
@@ -671,10 +655,6 @@ class SpotpressPreferences(QMainWindow):
 
     def on_screen_changed(self):
         idx = self.screen_list.currentRow()
-        # self._ctx.selected_screen = idx
-        # self.create_spotlight_overlay()
-        # self.create_information_overlay()
-        # self.append_log(f"> Tela selecionada: {idx}")
         self.change_screen(idx)
 
     def change_screen(self, screen_index):
