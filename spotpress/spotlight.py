@@ -630,9 +630,7 @@ class SpotlightOverlayWindow(QWidget):
         self.do_keypress(event)
 
     def closeEvent(self, event):
-        # self.save_config()
         event.accept()
 
     def quit(self):
-        # self.save_config()
         self.set_mouse_mode()
