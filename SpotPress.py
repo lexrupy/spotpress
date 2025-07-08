@@ -146,9 +146,10 @@ class SpotpressPreferences(QMainWindow):
 
         self.create_information_overlay()
 
+        self.refresh_screens()
+
         self.ui_started_up = True
 
-        self.refresh_screens()
         self.load_config()
 
         if self.modes_list.count() == 0:
@@ -502,35 +503,18 @@ class SpotpressPreferences(QMainWindow):
         self._ctx.info_overlay = InfOverlayWindow(geometry)
 
     def create_spotlight_overlay(self):
-        # screen_index = self._ctx.screen_index
-        # screenshot, geometry = capture_monitor_screenshot(screen_index)
-        # if self._ctx.overlay_window:
-        #     self._ctx.screen_index = screen_index
-        #     self._ctx.overlay_window.setGeometry(geometry)
-        # else:
-        #     self._ctx.overlay_window = SpotlightOverlayWindow(
-        #         context=self._ctx,
-        #         screenshot=screenshot,
-        #         screen_geometry=geometry,
-        #     )
-
         screen_index = self._ctx.screen_index
         screenshot, geometry = capture_monitor_screenshot(screen_index)
-        print(
-            f"[DEBUG] screen_index={screen_index}, geometry={geometry}, screenshot is None? {screenshot is None}"
-        )
 
         if self._ctx.overlay_window:
             self._ctx.screen_index = screen_index
             self._ctx.overlay_window.setGeometry(geometry)
-            self._ctx.overlay_window.show()  # Força visibilidade
         else:
             self._ctx.overlay_window = SpotlightOverlayWindow(
                 context=self._ctx,
                 screenshot=screenshot,
                 screen_geometry=geometry,
             )
-            self._ctx.overlay_window.show()
 
     def refresh_screens(self):
         non_primary_index = None
@@ -548,12 +532,8 @@ class SpotpressPreferences(QMainWindow):
         # Seleciona o primeiro monitor que não for primário
         if non_primary_index is not None:
             self.screen_list.setCurrentRow(non_primary_index)
-            selected_index = non_primary_index
         elif self.screen_list.count() > 0:
-            selected_index = 0
             self.screen_list.setCurrentRow(0)  # Fallback
-
-        self.change_screen(selected_index)
 
     def show_normal(self):
         self.show()
@@ -677,9 +657,9 @@ class SpotpressPreferences(QMainWindow):
     def change_screen(self, screen_index):
         if self._ctx.screen_index != screen_index:
             self._ctx.screen_index = screen_index
-        self.create_spotlight_overlay()
-        self.create_information_overlay()
-        self.append_log(f"> Tela selecionada: {screen_index}")
+            self.create_spotlight_overlay()
+            self.create_information_overlay()
+            self.append_log(f"> Tela selecionada: {screen_index}")
 
     def on_general_always_capture_screenshot_changed(self):
         pass
