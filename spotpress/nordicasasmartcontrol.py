@@ -235,12 +235,11 @@ class ASASmartControlPointer(BasePointerDevice):
         ow = self._ctx.overlay_window
         current_mode = self._ctx.current_mode
 
-        if button != "MOUSE_MOVE":
-            self._ctx.log(f"EXECUTA ACAO -> {button}")
+        # if button != "MOUSE_MOVE":
+        #     self._ctx.log(f"EXECUTA ACAO -> {button}")
         match button:
             case "TAB":
-                if ow.isVisible():
-                    ow.switch_mode()
+                ow.switch_mode()
             case "TAB+repeat":
                 self.emit_key_chord([uinput.KEY_LEFTALT, uinput.KEY_TAB])
             case "TAB++":
@@ -252,30 +251,34 @@ class ASASmartControlPointer(BasePointerDevice):
                 if ow.auto_mode_enabled() and ow.isVisible():
                     ow.hide_overlay()
             case "PREV":
-                if ow.isVisible():
-                    pass
+                if not ow.isVisible() or current_mode == MODE_MOUSE:
+                    self.emit_key_press(uinput.KEY_PAGEUP)
             case "NEXT":
-                if ow.isVisible():
-                    pass
+                if not ow.isVisible() or current_mode == MODE_MOUSE:
+                    self.emit_key_press(uinput.KEY_PAGEDOWN)
             case "G_UP":
                 if ow.isVisible():
                     if current_mode == MODE_LASER:
-                        ow.change_laser_size(+2)
+                        ow.change_laser_size(+1)
                     if current_mode in [MODE_SPOTLIGHT, MODE_MAG_GLASS]:
                         ow.change_spot_radius(+2)
             case "G_DOWN":
                 if current_mode == MODE_LASER:
-                    ow.change_laser_size(-2)
+                    ow.change_laser_size(-1)
                 if current_mode in [MODE_SPOTLIGHT, MODE_MAG_GLASS]:
                     ow.change_spot_radius(-2)
             case "G_LEFT":
                 if ow.isVisible():
                     if current_mode == MODE_MAG_GLASS:
                         ow.zoom(-1)
+                    elif current_mode == MODE_LASER:
+                        ow.next_laser_color()
             case "G_RIGHT":
                 if ow.isVisible():
                     if current_mode == MODE_MAG_GLASS:
                         ow.zoom(+1)
+                    elif current_mode == MODE_LASER:
+                        ow.next_laser_color(-1)
             case "HGL+hold":
                 if ow.isVisible():
                     pass
@@ -289,6 +292,8 @@ class ASASmartControlPointer(BasePointerDevice):
                     self.emit_key_chord([uinput.KEY_LEFTSHIFT, uinput.KEY_F5])
             case "NEXT++":
                 ow.switch_mode()
+            case "PREV++":
+                ow.switch_mode(-1)
 
     @classmethod
     def device_filter(cls, device_info, udevadm_output):
@@ -365,12 +370,6 @@ class ASASmartControlPointer(BasePointerDevice):
             self._last_movement_time = time.time()
             self._reset_auto_mode_timer()
             match event.code:
-                case ec.KEY_PAGEDOWN | ec.KEY_PAGEUP:
-                    if ow and ow.isVisible():
-                        pass
-                    else:
-                        # Emit if overlay is not visible
-                        self._ctx.ui.emit((event.type, event.code), event.value)
                 case ec.BTN_LEFT:
                     if self._ctx.current_mode == MODE_MOUSE:
                         self._ctx.ui.emit((event.type, event.code), event.value)
