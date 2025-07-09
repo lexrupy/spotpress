@@ -11,7 +11,7 @@ from PyQt5.QtWidgets import (
     QTextEdit,
 )
 
-from PyQt5.QtCore import pyqtSignal
+from PyQt5.QtCore import pyqtSignal, Qt, QTimer
 
 
 class DevicesTab(QWidget):
@@ -40,6 +40,7 @@ class DevicesTab(QWidget):
 
         layout.addWidget(QLabel("Detected Devices"))
         layout.addWidget(self.devices_list)
+        self.devices_list.currentItemChanged.connect(self.on_device_selected)
         layout.addWidget(QLabel("Device Configuration"))
         layout.addWidget(QTextEdit("this device does not have special configurations"))
         self.setLayout(layout)
@@ -70,3 +71,16 @@ class DevicesTab(QWidget):
         idx = self.screen_list.currentRow()
         if idx >= 0:
             self.screen_changed.emit(idx)
+
+    def change_device(self, dev):
+        self._ctx.device_monitor.set_active_device(dev)
+        # self._ctx.set_active_device(dev)
+
+    def on_device_selected(self, current, previous):
+        if current:
+            dev = current.data(Qt.UserRole)
+            QTimer.singleShot(50, lambda: self.change_device(dev))
+            # self._ctx.main_window.preferences_tab.update_modes_list_from_context()
+        else:
+            self._ctx.set_active_device(None)
+            # self._ctx.main_window.preferences_tab.update_modes_list_from_context()

@@ -22,11 +22,19 @@ from spotpress.appcontext import AppContext
 from spotpress.spotlight import SpotlightOverlayWindow
 from spotpress.infoverlay import InfOverlayWindow
 from spotpress.utils import (
-    capture_monitor_screenshot,
+    get_screen_geometry,
 )
 from spotpress.ui.preferences_tab import PreferencesTab
 from spotpress.ui.devices_tab import DevicesTab
 from spotpress.ui.log_tab import LogTab
+
+
+import warnings
+
+warnings.filterwarnings(
+    "ignore",
+    message="QObject::connect: Cannot queue arguments of type 'QItemSelection'",
+)
 
 
 CONFIG_PATH = os.path.expanduser("~/.config/spotpress/config.ini")
@@ -116,6 +124,9 @@ class SpotpressPreferences(QMainWindow):
         self.device_monitor = DeviceMonitor(self._ctx)
         self.device_monitor.start_monitoring()
         self.refresh_devices_signal.connect(self.refresh_devices_list)
+        self.refresh_devices_signal.connect(
+            self.preferences_tab.update_modes_list_from_context
+        )
         self.device_monitor.register_hotplug_callback(self.emit_refresh_devices_signal)
         self.refresh_devices_list()
         self.preferences_tab.update_modes_list_from_context()
@@ -149,6 +160,8 @@ class SpotpressPreferences(QMainWindow):
             item = QListWidgetItem(dev.display_name())
             item.setData(Qt.UserRole, dev)
             self.devices_tab.devices_list.addItem(item)
+
+        self.preferences_tab.update_modes_list_from_context()
 
     def create_tray_icon(self):
         size = 64
@@ -191,7 +204,7 @@ class SpotpressPreferences(QMainWindow):
 
     def create_spotlight_overlay(self):
         screen_index = self._ctx.screen_index
-        screenshot, geometry = capture_monitor_screenshot(screen_index)
+        geometry = get_screen_geometry(screen_index)
 
         if self._ctx.overlay_window:
             self._ctx.screen_index = screen_index
@@ -199,7 +212,6 @@ class SpotpressPreferences(QMainWindow):
         else:
             self._ctx.overlay_window = SpotlightOverlayWindow(
                 context=self._ctx,
-                screenshot=screenshot,
                 screen_geometry=geometry,
             )
 

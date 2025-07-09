@@ -24,7 +24,6 @@ class AppContext(QObject):
         self._show_info_function = show_info_function
         self._compatible_modes = []
         self._config = ObservableDict(callback=self._on_config_changed)
-        self.configChanged.connect(self._on_config_changed_signal)
         self._support_auto_mode = False
         self._windows_os = False
         self._current_mode = MODE_MOUSE
@@ -32,6 +31,17 @@ class AppContext(QObject):
         self._active_device = None
         self._current_screen_heigth = 600
         self._ui_ready = False
+        self._device_monitor = None
+
+        self.configChanged.connect(self._on_config_changed_signal)
+
+    @property
+    def device_monitor(self):
+        return self._device_monitor
+
+    @device_monitor.setter
+    def device_monitor(self, dm):
+        self._device_monitor = dm
 
     @property
     def ui_ready(self):
@@ -106,6 +116,8 @@ class AppContext(QObject):
     @compatible_modes.setter
     def compatible_modes(self, modes):
         self._compatible_modes = modes
+        if self._main_window:
+            self._main_window.preferences_tab.update_modes_list_from_context()
 
     @property
     def log_function(self):
@@ -213,7 +225,7 @@ class AppContext(QObject):
         if self._active_device == device:
             return
 
-        # Para dispositivo ativo anterior
+        # Para o anterior
         if self._active_device:
             self._active_device.stop()
 
@@ -221,6 +233,13 @@ class AppContext(QObject):
 
         if device:
             device.ensure_monitoring()
+            self.compatible_modes = sorted(getattr(device._ctx, "compatible_modes", []))
+        else:
+            self.compatible_modes = []
+
+    @property
+    def active_device(self):
+        return self._active_device
 
     def log(self, message):
         if self._log_function:

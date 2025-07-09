@@ -6,16 +6,13 @@ from spotpress.genericvrbox_win import GenericVRBoxPointer
 from spotpress.baseusorangedotai_win import BaseusOrangeDotAI
 from spotpress.virtualdevice_win import VirtualPointer
 
-DEVICE_CLASSES = {
-    BaseusOrangeDotAI,
-    GenericVRBoxPointer,
-    VirtualPointer
-}
+DEVICE_CLASSES = {BaseusOrangeDotAI, GenericVRBoxPointer, VirtualPointer}
 
 
 class DeviceMonitor:
     def __init__(self, context):
         self._ctx = context
+        self._ctx.device_monitor = self
         self._monitored_devices = {}
         self._hotplug_callbacks = []
         self._known_paths = set()
@@ -65,12 +62,16 @@ class DeviceMonitor:
 
                     for cls in DEVICE_CLASSES:
                         if cls.is_known_device(dev):
-                            self._ctx.log(f"+ Novo dispositivo detectado: {dev.product_name}")
+                            self._ctx.log(
+                                f"+ Novo dispositivo detectado: {dev.product_name}"
+                            )
                             self._known_paths.add(path)
                             self.add_monitored_device(cls, dev)
 
                 # Checagem de desconexão
-                current_paths = set(d.device_path for d in hid.HidDeviceFilter().get_devices())
+                current_paths = set(
+                    d.device_path for d in hid.HidDeviceFilter().get_devices()
+                )
                 removed_paths = self._known_paths - current_paths
                 for removed in removed_paths:
                     self._ctx.log(f"- Dispositivo removido: {removed}")

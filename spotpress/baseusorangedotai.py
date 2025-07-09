@@ -24,7 +24,7 @@ class BaseusOrangeDotAI(BasePointerDevice):
 
     def __init__(self, app_ctx, hidraw_path):
         super().__init__(app_ctx=app_ctx, hidraw_path=hidraw_path)
-        self._ctx.compatible_modes = [
+        self.compatible_modes = [
             MODE_MOUSE,
             MODE_SPOTLIGHT,
             MODE_LASER,
@@ -322,10 +322,8 @@ class BaseusOrangeDotAI(BasePointerDevice):
                     yield bytes(buffer)
                     buffer.clear()
         except OSError as e:
-            print(f"[ERRO] Falha ao ler do device: {e}")
             self._ctx.log(f"[ERRO] Falha ao ler do device: {e}")
         except Exception as e:
-            print(f"[ERRO] Exceção inesperada: {e}")
             self._ctx.log(f"[ERRO] Exceção inesperada: {e}")
 
     def processa_pacote_hid(self, data):

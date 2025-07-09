@@ -328,7 +328,7 @@ class PreferencesTab(QWidget):
         item = self.modes_list.item(row)
         name = item.text()
         mode_id = MODE_NAME_TO_ID.get(name)
-        if mode_id is not None:
+        if mode_id is not None and mode_id != self._ctx.current_mode:
             self._ctx.current_mode = mode_id
             self._ctx.log(f"> Modo alterado para: {name} (ID: {mode_id})")
             self.update_context_config()
@@ -551,7 +551,7 @@ class PreferencesTab(QWidget):
                 item.setCheckState(Qt.Checked if enabled else Qt.Unchecked)
                 self.modes_list.addItem(item)
             except Exception as e:
-                print(f"Erro ao carregar modo '{raw}': {e}")
+                self._ctx.log(f"Erro ao carregar modo '{raw}': {e}")
             i += 1
 
     def set_current_mode(self, current_mode: int):

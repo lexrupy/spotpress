@@ -18,6 +18,9 @@ DEVICE_CLASSES = {BaseusOrangeDotAI, GenericVRBoxPointer, ASASmartControlPointer
 class DeviceMonitor:
     def __init__(self, context):
         self._ctx = context
+        self._ctx.device_monitor = self
+        self._switch_lock = threading.Lock()
+        self._switch_thread = None
         self._monitored_devices = {}
         self._hotplug_callbacks = []
         self._ctx.ui = uinput.Device(
@@ -49,21 +52,49 @@ class DeviceMonitor:
                 self.add_monitored_device(cls, path)
         else:
             self._ctx.log("* Nenhum dispositivo compatível encontrado.")
+        if len(self._monitored_devices) == 1:
+            dev = next(iter(self._monitored_devices.values()))
+            self.set_active_device(dev)
+
+    def set_active_device(self, device):
+        if self._ctx.active_device == device:
+            return
+
+        # Se já tem troca em andamento, ignora nova troca
+        if self._switch_thread and self._switch_thread.is_alive():
+            self._ctx.log("Troca de dispositivo já em andamento, ignorando")
+            return
+
+        old_device = self._ctx.active_device
+
+        def switch_device():
+            with self._switch_lock:
+                if old_device:
+                    self._ctx.log(f"* Desativando: {old_device.__class__.__name__}")
+                    old_device.stop()
+                if device:
+                    self._ctx.log(f"* Ativando: {device.__class__.__name__}")
+                    device.ensure_monitoring()
+                    self._ctx.set_active_device(device)
+                    self._ctx.compatible_modes = sorted(
+                        getattr(device, "compatible_modes", [])
+                    )
+
+        self._switch_thread = threading.Thread(target=switch_device, daemon=True)
+        self._switch_thread.start()
 
     def add_monitored_device(self, cls, path=None):
         if cls not in self._monitored_devices:
             dev = cls(app_ctx=self._ctx, hidraw_path=path)
-            threading.Thread(target=dev.monitor, daemon=True).start()
+            # threading.Thread(target=dev.monitor, daemon=True).start()
             self._monitored_devices[cls] = dev
-            self._notify_callbacks()
-            self._ctx.log(f"Adicionando dispositivo: {cls.__name__} com path {path}")
+            self._ctx.log(f"Dispositivo detectado: {cls.__name__} (path: {path})")
         else:
             dev = self._monitored_devices[cls]
             dev.add_known_path(path)
             # dev.ensure_monitoring()
-            self._ctx.log(
-                f"Dispositivo {cls.__name__} já monitorado, adicionando path: {path}"
-            )
+            self._ctx.log(f"{cls.__name__} já conhecido. Adicionando novo path: {path}")
+        self._notify_callbacks()
 
     def remove_monitored_device(self, dev):
         # Encontra a classe correspondente à instância
@@ -88,9 +119,6 @@ class DeviceMonitor:
 
     def get_monitored_devices(self):
         return list(self._monitored_devices.values())
-
-    # def get_compatible_devices(self):
-    #     return [d for d in self.devices if d.is_compatible()]
 
     def register_hotplug_callback(self, callback):
         self._hotplug_callbacks.append(callback)

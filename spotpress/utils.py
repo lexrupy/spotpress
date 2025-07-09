@@ -66,7 +66,7 @@ def pil_to_qimage(pil_img):
     return QImage(data, pil_img.width, pil_img.height, QImage.Format_RGBA8888)
 
 
-def capture_monitor_screenshot(screen_index):
+def get_screen_and_geometry(screen_index):
     app = QGuiApplication.instance()
     if not app:
         app = QGuiApplication([])
@@ -77,8 +77,17 @@ def capture_monitor_screenshot(screen_index):
 
     screen = screens[screen_index]
     geometry = screen.geometry()
-    screenshot = screen.grabWindow(0)  # Captura toda a tela
-
-    return screenshot.toImage(), QRect(
+    return screen, QRect(
         geometry.left(), geometry.top(), geometry.width(), geometry.height()
     )
+
+
+def get_screen_geometry(screen_index):
+    _, geometry = get_screen_and_geometry(screen_index)
+    return geometry
+
+
+def capture_monitor_screenshot(screen_index):
+    screen, _ = get_screen_and_geometry(screen_index)
+    screenshot = screen.grabWindow(0)
+    return screenshot.toImage()

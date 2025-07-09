@@ -1,3 +1,4 @@
+import time
 from PyQt5.QtWidgets import (
     QApplication,
     QWidget,
@@ -39,7 +40,7 @@ class LogTab(QWidget):
         self.setLayout(layout)
 
     def append_log_message(self, message: str):
-        self.log_text.append(message)
+        self.log_text.append(f"{int(time.time())} - {message}")
 
     def on_clear_log_clicked(self):
         self.log_text.clear()

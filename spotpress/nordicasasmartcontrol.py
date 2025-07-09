@@ -22,11 +22,11 @@ class ASASmartControlPointer(BasePointerDevice):
 
     def __init__(self, app_ctx, hidraw_path):
         super().__init__(app_ctx=app_ctx, hidraw_path=hidraw_path)
-        self._ctx.compatible_modes = [
+        self.compatible_modes = [
             MODE_MOUSE,
             MODE_SPOTLIGHT,
             MODE_LASER,
-            MODE_PEN,
+            # MODE_PEN,
             MODE_MAG_GLASS,
         ]
 
@@ -122,7 +122,7 @@ class ASASmartControlPointer(BasePointerDevice):
             if (
                 self._ctx.current_mode != MODE_MOUSE
                 and self._ctx.overlay_window
-                and not self._ctx.overlay_window.isVisible()
+                and not self._ctx.overlay_window.is_overlay_actually_visible()
                 and self._ctx.overlay_window.auto_mode_enabled()
                 and (now - self._last_movement_time) > self._auto_mode_timeout
             ):
@@ -198,10 +198,8 @@ class ASASmartControlPointer(BasePointerDevice):
                     break
                 yield bytes(b)
         except OSError as e:
-            print(f"[ERRO] Falha ao ler do device: {e}")
             self._ctx.log(f"[ERRO] Falha ao ler do device: {e}")
         except Exception as e:
-            print(f"[ERRO] Exceção inesperada: {e}")
             self._ctx.log(f"[ERRO] Exceção inesperada: {e}")
 
     def processa_pacote_hid(self, data):
@@ -237,6 +235,7 @@ class ASASmartControlPointer(BasePointerDevice):
     def executa_acao(self, button):
         ow = self._ctx.overlay_window
         current_mode = self._ctx.current_mode
+        normal_mode = current_mode == MODE_MOUSE or ow.is_overlay_actually_visible()
 
         if button != "MOUSE_MOVE":
             self._ctx.log(f"EXECUTA ACAO -> {button}")
@@ -248,20 +247,20 @@ class ASASmartControlPointer(BasePointerDevice):
             case "TAB++":
                 ow.set_auto_mode(not ow.auto_mode_enabled())
             case "MOUSE_MOVE":
-                if ow.auto_mode_enabled() and not ow.isVisible():
+                if ow.auto_mode_enabled() and not ow.is_overlay_actually_visible():
                     pass
                     # ow.show_overlay()
             case "MOUSE_STOP":
-                if ow.auto_mode_enabled() and ow.isVisible():
+                if ow.auto_mode_enabled() and ow.is_overlay_actually_visible():
                     ow.hide_overlay()
             case "PREV":
-                if not ow.isVisible() or current_mode == MODE_MOUSE:
+                if normal_mode:
                     self.emit_key_press(uinput.KEY_PAGEUP)
             case "NEXT":
-                if not ow.isVisible() or current_mode == MODE_MOUSE:
+                if normal_mode:
                     self.emit_key_press(uinput.KEY_PAGEDOWN)
             case "G_UP":
-                if ow.isVisible():
+                if ow.is_overlay_actually_visible():
                     if current_mode == MODE_LASER:
                         ow.change_laser_size(+1)
                     if current_mode in [MODE_SPOTLIGHT, MODE_MAG_GLASS]:
@@ -272,27 +271,27 @@ class ASASmartControlPointer(BasePointerDevice):
                 if current_mode in [MODE_SPOTLIGHT, MODE_MAG_GLASS]:
                     ow.change_spot_radius(-2)
             case "G_LEFT":
-                if ow.isVisible():
+                if ow.is_overlay_actually_visible():
                     if current_mode == MODE_MAG_GLASS:
                         ow.zoom(-1)
                     elif current_mode == MODE_LASER:
                         ow.next_laser_color()
             case "G_RIGHT":
-                if ow.isVisible():
+                if ow.is_overlay_actually_visible():
                     if current_mode == MODE_MAG_GLASS:
                         ow.zoom(+1)
                     elif current_mode == MODE_LASER:
                         ow.next_laser_color(-1)
             case "HGL+hold":
-                if ow.isVisible():
+                if ow.is_overlay_actually_visible():
                     pass
             case "HGL+release":
                 ow.finish_pen_path()
             case "ESC":
-                if not ow.isVisible():
+                if normal_mode:
                     self.emit_key_press(uinput.KEY_ESC)
             case "START":
-                if not ow.isVisible():
+                if normal_mode:
                     self.emit_key_chord([uinput.KEY_LEFTSHIFT, uinput.KEY_F5])
             case "NEXT++":
                 ow.switch_mode()
@@ -381,7 +380,7 @@ class ASASmartControlPointer(BasePointerDevice):
                         if event.value == 1:
                             self._is_mouse_down = True
                             self._mouse_down_time = time.time()
-                            if ow and ow.isVisible():
+                            if ow and ow.is_overlay_actually_visible():
                                 self.executa_acao("BTN_LEFT")
                         else:
                             self._is_mouse_down = False

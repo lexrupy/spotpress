@@ -324,10 +324,8 @@ class BaseusOrangeDotAI(BasePointerDevice):
                     yield bytes(buffer)
                     buffer.clear()
         except OSError as e:
-            print(f"[ERRO] Falha ao ler do device: {e}")
             self._ctx.log(f"[ERRO] Falha ao ler do device: {e}")
         except Exception as e:
-            print(f"[ERRO] Exceção inesperada: {e}")
             self._ctx.log(f"[ERRO] Exceção inesperada: {e}")
 
     def processa_pacote_hid(self, data):
