@@ -159,8 +159,8 @@ class SpotlightOverlayWindow(QWidget):
     def set_mag_glass_mode(self):
         self.switch_mode(direct_mode=MODE_MAG_GLASS)
 
-    def hide_overlay(self, set_hidden=True):
-        self.overlay_hidden = set_hidden
+    def hide_overlay(self):
+        self.overlay_hidden = True
         self.clear_pixmap()
         self.hide()
 
@@ -168,12 +168,6 @@ class SpotlightOverlayWindow(QWidget):
         return not self.overlay_hidden and self.isVisible()
 
     def show_overlay(self):
-        # now = time.time()
-        # if now - self._last_show_overlay_time < 0.9:
-        #     self._ctx.log("show_overlay blocked by cooldown")
-        #     return
-        #
-        # self._last_show_overlay_time = now
         if (
             self._showing_overlay
             or self._capturing_screenshot
@@ -187,12 +181,12 @@ class SpotlightOverlayWindow(QWidget):
                 if self._ctx.current_mode == MODE_MAG_GLASS:
                     if self._ctx.config["magnify_zoom"] <= self.zoom_min:
                         self._ctx.config["magnify_zoom"] = self.zoom_min
-                    self.capture_screenshot()
+                    self.capture_screenshot(show_after=True)
                 elif self._ctx.current_mode == MODE_LASER and self.laser_inverted():
-                    self.capture_screenshot()
+                    self.capture_screenshot(show_after=True)
                 elif self._ctx.current_mode != MODE_MOUSE:
                     if self._always_take_screenshot:
-                        self.capture_screenshot()
+                        self.capture_screenshot(show_after=True)
                     else:
                         self.showFullScreen()
             self.update()
@@ -338,14 +332,10 @@ class SpotlightOverlayWindow(QWidget):
             self.current_line_width = new_width
             self.update()  # atualiza a tela para refletir a mudança, se necessário
 
-    def capture_screenshot(self):
+    def capture_screenshot(self, show_after=False):
         self._capturing_screenshot = True
         try:
-            do_hide = self.is_overlay_actually_visible()
-            if do_hide:
-                # Esconde a janela overlay
-                # self.hide_overlay(set_hidden=False)
-                self.hide_overlay(set_hidden=False)
+            self.hide_overlay()
 
             QApplication.processEvents()
             time.sleep(0.5)  # aguardar atualização da tela
@@ -357,9 +347,8 @@ class SpotlightOverlayWindow(QWidget):
             self.pixmap = QPixmap.fromImage(qimage)
 
             # Mostra a janela overlay novamente se foi ocultada
-            if do_hide:
+            if show_after:
                 self.showFullScreen()
-                self.overlay_hidden = False
         finally:
             self._capturing_screenshot = False
 
