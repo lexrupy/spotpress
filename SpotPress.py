@@ -164,17 +164,9 @@ class SpotpressPreferences(QMainWindow):
         self.preferences_tab.update_modes_list_from_context()
 
     def create_tray_icon(self):
-        size = 64
-        pixmap = QPixmap(size, size)
-        pixmap.fill(Qt.transparent)
-        painter = QPainter(pixmap)
-        painter.setBrush(QColor("gray"))
-        painter.setPen(Qt.NoPen)
-        painter.drawEllipse(0, 0, size, size)
-        painter.end()
-
-        icon = QIcon(pixmap)
+        icon = QIcon("spotpress.png")
         self.tray_icon = QSystemTrayIcon(icon, self)
+
         menu = QMenu()
         restore_action = QAction("Restaurar", self)
         restore_action.triggered.connect(self.show_normal)
@@ -221,11 +213,22 @@ class SpotpressPreferences(QMainWindow):
         self.activateWindow()
 
     def show_about(self):
-        QMessageBox.information(
-            self,
-            "About SpotPress...",
-            "SpotPress: A Spotlight Aplication For Presentations.\nLicenced under LGPL\nContributors:\nAlexandre da Silva <lexrupy>",
+        # QMessageBox.information(
+        #     self,
+        #     "About SpotPress...",
+        #     "SpotPress: A Spotlight Aplication For Presentations.\nLicenced under LGPL\nContributors:\nAlexandre da Silva <lexrupy>",
+        # )
+        msg = QMessageBox(self)
+        msg.setWindowTitle("About SpotPress...")
+        msg.setText(
+            "SpotPress: A Spotlight Aplication For Presentations.\n"
+            "Licenced under LGPL\nContributors:\nAlexandre da Silva <lexrupy>"
         )
+
+        pixmap = QPixmap("spotpress.png")  # PNG já com o tamanho ideal
+        msg.setIconPixmap(pixmap)
+
+        msg.exec_()
 
     def append_log(self, message):
         self.log_tab.append_log_message(message)
@@ -293,6 +296,7 @@ class SpotpressPreferences(QMainWindow):
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     app.setApplicationName("SpotPress")
+    app.setWindowIcon(QIcon("spotpress.png"))
     window = SpotpressPreferences()
     window.show()
     sys.exit(app.exec_())
