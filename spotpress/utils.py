@@ -42,6 +42,13 @@ SHADE_COLORS = [
 ]
 
 
+# Reverter MODE_MAP para obter nome -> valor
+MODE_NAME_TO_ID = {v: k for k, v in MODE_MAP.items()}
+
+# Lista default com todos habilitados
+DEFAULT_MODES = [(name, True) for name in MODE_NAME_TO_ID.keys()]
+
+
 class ObservableDict(dict):
     def __init__(self, *args, callback=None, **kwargs):
         super().__init__(*args, **kwargs)

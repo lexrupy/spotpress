@@ -9,6 +9,7 @@ from spotpress.utils import (
     MODE_MOUSE,
     MODE_SPOTLIGHT,
     MODE_MAG_GLASS,
+    MODE_PEN,
 )
 from .pointerdevice import BasePointerDevice
 
@@ -25,8 +26,10 @@ class ASASmartControlPointer(BasePointerDevice):
             MODE_MOUSE,
             MODE_SPOTLIGHT,
             MODE_LASER,
+            MODE_PEN,
             MODE_MAG_GLASS,
         ]
+
         self._ctx.support_auto_mode = True
         self._last_click_time = {}
         self._last_release_time = {}

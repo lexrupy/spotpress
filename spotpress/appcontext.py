@@ -6,6 +6,7 @@ from PyQt5.QtCore import QObject, pyqtSignal
 
 class AppContext(QObject):
     configChanged = pyqtSignal(str, object)  # chave, valor
+    currentModeChanged = pyqtSignal(int)
 
     def __init__(
         self,
@@ -13,7 +14,6 @@ class AppContext(QObject):
         log_function=None,
         overlay_window=None,
         show_info_function=None,
-        change_screen_function=None,
         main_window=None,
     ):
         super().__init__()
@@ -22,7 +22,6 @@ class AppContext(QObject):
         self._spotlight_overlay_window = overlay_window
         self._info_overlay_window = None
         self._show_info_function = show_info_function
-        self._change_screen_function = change_screen_function
         self._compatible_modes = []
         self._config = ObservableDict(callback=self._on_config_changed)
         self.configChanged.connect(self._on_config_changed_signal)
@@ -32,6 +31,15 @@ class AppContext(QObject):
         self._main_window = main_window
         self._active_device = None
         self._current_screen_heigth = 600
+        self._ui_ready = False
+
+    @property
+    def ui_ready(self):
+        return self._ui_ready
+
+    @ui_ready.setter
+    def ui_ready(self, rdy):
+        self._ui_ready = rdy
 
     @property
     def config(self):
@@ -47,7 +55,9 @@ class AppContext(QObject):
 
     @current_mode.setter
     def current_mode(self, mode):
-        self._current_mode = mode
+        if mode != self._current_mode:
+            self._current_mode = mode
+            self.currentModeChanged.emit(mode)
 
     @property
     def windows_os(self):
@@ -146,56 +156,58 @@ class AppContext(QObject):
         if not ui:
             return
 
+        pt = ui.preferences_tab
+
         if key == "spotlight_shape":
-            ui.spotlight_shape.setCurrentText(value)
+            pt.spotlight_shape.setCurrentText(value)
         elif key == "spotlight_size":
-            ui.spotlight_size.setValue(value)
+            pt.spotlight_size.setValue(value)
         elif key == "spotlight_shade":
-            ui.spotlight_shade.setChecked(value)
+            pt.spotlight_shade.setChecked(value)
         elif key == "spotlight_border":
-            ui.spotlight_border.setChecked(value)
+            pt.spotlight_border.setChecked(value)
 
         elif key == "magnify_shape":
-            ui.magnify_shape.setCurrentText(value)
+            pt.magnify_shape.setCurrentText(value)
         elif key == "magnify_size":
-            ui.magnify_size.setValue(value)
+            pt.magnify_size.setValue(value)
         elif key == "magnify_border":
-            ui.magnify_border.setChecked(value)
+            pt.magnify_border.setChecked(value)
         elif key == "magnify_zoom":
-            ui.magnify_zoom.setValue(value)
+            pt.magnify_zoom.setValue(value)
 
         elif key == "laser_dot_size":
-            ui.laser_dot_size.setValue(value)
+            pt.laser_dot_size.setValue(value)
         elif key == "laser_color_index":
-            ui.laser_color.setCurrentIndex(value)
+            pt.laser_color.setCurrentIndex(value)
         elif key == "laser_opacity":
-            ui.laser_opacity.setValue(value)
+            pt.laser_opacity.setValue(value)
         elif key == "laser_reflection":
-            ui.laser_reflection.setChecked(value)
+            pt.laser_reflection.setChecked(value)
 
         elif key == "marker_width":
-            ui.marker_width.setValue(value)
+            pt.marker_width.setValue(value)
         elif key == "marker_color_index":
-            ui.marker_color.setCurrentIndex(value)
+            pt.marker_color.setCurrentIndex(value)
         elif key == "marker_opacity":
-            ui.marker_opacity.setValue(value)
+            pt.marker_opacity.setValue(value)
 
         elif key == "shade_color_index":
-            ui.shade_color.setCurrentIndex(value)
+            pt.shade_color.setCurrentIndex(value)
         elif key == "shade_opacity":
-            ui.shade_opacity.setValue(value)
+            pt.shade_opacity.setValue(value)
 
         elif key == "border_color_index":
-            ui.border_color.setCurrentIndex(value)
+            pt.border_color.setCurrentIndex(value)
         elif key == "border_opacity":
-            ui.border_opacity.setValue(value)
+            pt.border_opacity.setValue(value)
         elif key == "border_width":
-            ui.border_width.setValue(value)
+            pt.border_width.setValue(value)
 
         elif key == "general_always_capture":
-            ui.general_always_capture_screenshot.setChecked(value)
+            pt.general_always_capture_screenshot.setChecked(value)
         elif key == "general_auto_mode":
-            ui.general_enable_auto_mode.setChecked(value)
+            pt.general_enable_auto_mode.setChecked(value)
 
     def set_active_device(self, device):
         if self._active_device == device:
@@ -217,11 +229,3 @@ class AppContext(QObject):
     def show_info(self, message):
         if self._show_info_function:
             self._show_info_function(message)
-
-    def change_screen(self, screen_index):
-        if screen_index != self.screen_index:
-            self._screen_index = screen_index
-            screen = QGuiApplication.screens()[screen_index]
-            self._current_screen_heigth = screen.size().height()
-            if self._change_screen_function:
-                self._change_screen_function(screen_index)
