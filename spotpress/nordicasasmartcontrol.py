@@ -248,8 +248,7 @@ class ASASmartControlPointer(BasePointerDevice):
                 ow.set_auto_mode(not ow.auto_mode_enabled())
             case "MOUSE_MOVE":
                 if ow.auto_mode_enabled() and not ow.is_overlay_actually_visible():
-                    pass
-                    # ow.show_overlay()
+                    ow.show_overlay()
             case "MOUSE_STOP":
                 if ow.auto_mode_enabled() and ow.is_overlay_actually_visible():
                     ow.hide_overlay()

@@ -367,16 +367,17 @@ class BaseusOrangeDotAI(BasePointerDevice):
     def executa_acao(self, button):
         ow = self._ctx.overlay_window
         current_mode = self._ctx.current_mode
+        normal_mode = current_mode == MODE_MOUSE or ow.is_overlay_actually_visible()
 
         # self._ctx.log(f"{button}")
         match button:
             case "OK":
-                if ow.isVisible():
+                if ow.is_overlay_actually_visible():
                     ow.switch_mode()
                 else:
                     self.emit_key_press(uinput.BTN_LEFT)
             case "OK++":
-                if ow.isVisible():
+                if ow.is_overlay_actually_visible():
                     ow.switch_mode()
                 else:
                     self.emit_key_chord([uinput.KEY_LEFTALT, uinput.KEY_TAB])
@@ -385,11 +386,11 @@ class BaseusOrangeDotAI(BasePointerDevice):
             case "LASER":
                 pass
             case "PREV":
-                if ow.isVisible():
+                if ow.is_overlay_actually_visible():
                     # When not visible, already emit KEY_PAGEUP
                     pass
             case "PREV+long":
-                if not ow.isVisible():
+                if normal_mode:
                     if self._was_last_esc:
                         self.emit_key_chord([uinput.KEY_LEFTSHIFT, uinput.KEY_F5])
                         self._was_last_esc = False
@@ -399,7 +400,7 @@ class BaseusOrangeDotAI(BasePointerDevice):
                 # else:
                 #     ow.switch_mode(direct_mode=MODE_MOUSE)
             case "NEXT":
-                if ow.isVisible():
+                if ow.is_overlay_actually_visible():
                     # When not visible, already emit KEY_PAGEDOWN
                     pass
             case "NEXT+long":
@@ -545,7 +546,7 @@ class BaseusOrangeDotAI(BasePointerDevice):
                     # | ec.BTN_RIGHT
                     # | ec.BTN_LEFT
                 ):
-                    if ow and ow.isVisible():
+                    if ow and ow.is_overlay_actually_visible():
                         pass
                     else:
 
