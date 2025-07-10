@@ -7,6 +7,18 @@ import evdev
 
 from spotpress.hw.base_pointer_device import BasePointerDevice
 
+# from spotpress.qtcompat import pyqtSlot, QObject
+#
+#
+# class ActionInvoker(QObject):
+#     def __init__(self, callback):
+#         super().__init__()
+#         self._callback = callback
+#
+#     @pyqtSlot(str)
+#     def invoke(self, action: str):
+#         self._callback(action)
+
 
 class PointerDevice(BasePointerDevice):
     VENDOR_ID = None

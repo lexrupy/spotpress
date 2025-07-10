@@ -7,8 +7,12 @@ try:
         QPoint,
         QPointF,
         pyqtSignal,
+        pyqtSlot,
         QTimer,
         QObject,
+        QThread,
+        QMetaObject,
+        Q_ARG,
     )
     from PyQt6.QtWidgets import (
         QApplication,
@@ -58,6 +62,8 @@ try:
         QGuiApplication,
         QFontMetrics,
     )
+
+    Qt_ConnectionType_QueuedConnection = Qt.ConnectionType.QueuedConnection
 
     # Enums e constantes adaptadas PyQt6
     Qt_FramelessWindowHint = Qt.WindowType.FramelessWindowHint
@@ -133,15 +139,19 @@ try:
 except ImportError:
     from PyQt5.QtCore import (  # pyright: ignore
         Qt,
+        QThread,
+        QMetaObject,
         QEvent,
         QObject,
         QPoint,
         QPointF,
         Qt,
         pyqtSignal,
+        pyqtSlot,
         QTimer,
         QRect,
         QRectF,
+        Q_ARG,
     )
     from PyQt5.QtWidgets import (  # pyright: ignore
         QApplication,
@@ -191,6 +201,8 @@ except ImportError:
         QImage,
         QFontMetrics,
     )
+
+    Qt_ConnectionType_QueuedConnection = Qt.QueuedConnection
 
     Qt_WindowMinimizeButtonHint = Qt.WindowMinimizeButtonHint
     Qt_WindowType_Tool = Qt.Tool
@@ -262,6 +274,9 @@ __all__ = [
     "Qt",
     "QEvent",
     "QObject",
+    "QThread",
+    "QMetaObject",
+    "Qt_ConnectionType_QueuedConnection",
     "QApplication",
     "QGuiApplication",
     "QMenu",
@@ -337,5 +352,7 @@ __all__ = [
     "QEvent_MouseMove",
     "QtItem_UserRole",
     "pyqtSignal",
+    "pyqtSlot",
+    "Q_ARG",
     "SP_QT_VERSION",
 ]

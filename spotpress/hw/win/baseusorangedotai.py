@@ -412,13 +412,13 @@ class BaseusOrangeDotAI(PointerDevice):
             case "MOUSE+hold":
                 self.set_hold_start("MOUSE")
                 if ow.auto_mode_enabled():
-                    ow.show_overlay()
+                    self._ctx.show_overlay()
             case "MOUSE+release":
                 if self.end_hold_repeat("MOUSE"):
                     pass
                 else:
                     if ow.auto_mode_enabled():
-                        ow.hide_overlay()
+                        self._ctx.hide_overlay()
             case "MOUSE+repeat":
                 pass
             case "MOUSE++":

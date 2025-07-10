@@ -59,6 +59,8 @@ class SpotpressPreferences(QMainWindow):
     log_signal = pyqtSignal(str)
     info_signal = pyqtSignal(str)
     refresh_devices_signal = pyqtSignal()
+    show_overlay_signal = pyqtSignal()
+    hide_overlay_signal = pyqtSignal()
 
     def __init__(self):
         super().__init__()
@@ -76,6 +78,8 @@ class SpotpressPreferences(QMainWindow):
             screen_index=0,
             log_function=self.thread_safe_log,
             show_info_function=self.thread_safe_info,
+            show_overlay_function=self.thread_safe_show_overlay,
+            hide_overlay_function=self.thread_safe_hide_overlay,
             main_window=self,
         )
 
@@ -134,6 +138,8 @@ class SpotpressPreferences(QMainWindow):
 
         self.log_signal.connect(self.append_log)
         self.info_signal.connect(self.show_info)
+        self.show_overlay_signal.connect(self.show_overlay)
+        self.hide_overlay_signal.connect(self.hide_overlay)
 
         self.device_monitor = DeviceMonitor(self._ctx)
         self.device_monitor.start_monitoring()
@@ -258,6 +264,20 @@ class SpotpressPreferences(QMainWindow):
             self._info_timer.setSingleShot(True)
             self._info_timer.timeout.connect(self._ctx.info_overlay.hide)
             self._info_timer.start(1000)
+
+    def show_overlay(self):
+        if self._ctx.overlay_window is not None:
+            self._ctx.overlay_window.show_overlay()
+
+    def hide_overlay(self):
+        if self._ctx.overlay_window is not None:
+            self._ctx.overlay_window.hide_overlay()
+
+    def thread_safe_hide_overlay(self):
+        self.hide_overlay_signal.emit()
+
+    def thread_safe_show_overlay(self):
+        self.show_overlay_signal.emit()
 
     def thread_safe_log(self, message):
         self.log_signal.emit(message)

@@ -4,6 +4,8 @@ import threading
 import os
 import evdev.ecodes as ec
 
+from spotpress.qtcompat import QTimer
+
 from spotpress.utils import (
     MODE_LASER,
     MODE_MOUSE,
@@ -46,6 +48,7 @@ class ASASmartControlPointer(PointerDevice):
         self._rel_buffer_size = 15
         self._rel_trigger_count = 8
         self._last_movement_time = 0
+        self._last_mouse_move_action = 0
         self._auto_mode_active = False
         self._auto_mode_timeout = 1.0
         self._auto_mode_timer = None
@@ -116,21 +119,6 @@ class ASASmartControlPointer(PointerDevice):
         t = threading.Timer(self.DOUBLE_CLICK_INTERVAL, delayed_click)
         self._pending_click_timers[botao] = t
         t.start()
-
-    def _check_auto_mode_activation(self):
-        now = time.time()
-        if not self._is_mouse_down:
-            # Se houve movimento recente e overlay está escondido, ativa
-            if (
-                self._ctx.current_mode != MODE_MOUSE
-                and self._ctx.overlay_window
-                and not self._ctx.overlay_window.is_overlay_actually_visible()
-                and self._ctx.overlay_window.auto_mode_enabled()
-                and (now - self._last_movement_time) > self._auto_mode_timeout
-            ):
-                self._ctx.log("[AUTO] Ativando overlay por movimento")
-                self._ctx.overlay_window.show_overlay()
-                self._auto_mode_active = True
 
     def _reset_auto_mode_timer(self):
         if self._auto_mode_timer is not None:
@@ -250,10 +238,14 @@ class ASASmartControlPointer(PointerDevice):
                 ow.set_auto_mode(not ow.auto_mode_enabled())
             case "MOUSE_MOVE":
                 if ow.auto_mode_enabled() and not ow.is_overlay_actually_visible():
-                    ow.show_overlay()
+                    now = time.time()
+                    if now - self._last_mouse_move_action > 1.2:
+                        self._last_mouse_move_action = now
+                        self._ctx.log(f"EXECUTA ACAO -> {button}")
+                        self._ctx.show_overlay()
             case "MOUSE_STOP":
                 if ow.auto_mode_enabled() and ow.is_overlay_actually_visible():
-                    ow.hide_overlay()
+                    self._ctx.hide_overlay()
             case "PREV":
                 if normal_mode:
                     self.emit_key_press(uinput.KEY_PAGEUP)
@@ -377,8 +369,8 @@ class ASASmartControlPointer(PointerDevice):
             else:
                 self._last_mouse_movement = time.time()
                 if self._last_mouse_movement - self._mouse_down_time > 1.5:
-                    self.executa_acao("MOUSE_MOVE")
                     self._ctx.ui.emit((event.type, event.code), event.value)
+                    self.executa_acao("MOUSE_MOVE")
 
         elif event.type == ec.EV_KEY:
             self._last_movement_time = time.time()

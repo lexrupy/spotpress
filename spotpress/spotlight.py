@@ -32,6 +32,7 @@ from spotpress.qtcompat import (
     Qt_WindowType_Tool,
     Qt_WindowType_WindowStaysOnTopHint,
     Qt_WindowType_X11BypassWindowManagerHint,
+    pyqtSignal,
 )
 
 from .utils import (
@@ -53,6 +54,7 @@ DEBUG = True
 
 
 class SpotlightOverlayWindow(QWidget):
+
     def __init__(self, context, screen_geometry):
         super().__init__()
 
@@ -75,8 +77,6 @@ class SpotlightOverlayWindow(QWidget):
         self.setCursor(Qt_BlankCursor)
 
         self.overlay_hidden = False
-
-        self._auto_mode_enabled = True
 
         self._last_show_overlay_time = 0
 
@@ -106,6 +106,7 @@ class SpotlightOverlayWindow(QWidget):
 
         self.cursor_pos = None  # Usado para exibir a caneta
 
+        # Timer de Atualização da Tela
         self.timer = QTimer()
         self.timer.timeout.connect(self.update)
         self.timer.start(16)
@@ -173,7 +174,10 @@ class SpotlightOverlayWindow(QWidget):
         return self._ctx.config["laser_color_index"] == len(LASER_COLORS) - 1
 
     def auto_mode_enabled(self):
-        return self._auto_mode_enabled and self._ctx.support_auto_mode
+        return (
+            self._ctx.config.get("general_auto_mode", False)
+            and self._ctx.support_auto_mode
+        )
 
     def set_spotlight_mode(self):
         self.switch_mode(direct_mode=MODE_SPOTLIGHT)
@@ -212,7 +216,7 @@ class SpotlightOverlayWindow(QWidget):
                 if self._ctx.current_mode == MODE_MAG_GLASS:
                     if self._ctx.config["magnify_zoom"] <= self.zoom_min:
                         self._ctx.config["magnify_zoom"] = self.zoom_min
-                    self.capture_screenshot(show_after=True)
+                    self.capture_screenshot(show_after=True, generate_blurred=True)
                 elif self._ctx.current_mode == MODE_LASER and self.laser_inverted():
                     self.capture_screenshot(show_after=True)
                 elif self._ctx.current_mode != MODE_MOUSE:
@@ -229,7 +233,7 @@ class SpotlightOverlayWindow(QWidget):
     def set_auto_mode(self, enable=True):
         if not self._ctx.support_auto_mode:
             return
-        self._auto_mode_enabled = enable
+        self._ctx.config["general_auto_mode"] = enable
         if enable:
             self._ctx.show_info(f"Auto Mode")
             self.hide_overlay()
@@ -364,7 +368,7 @@ class SpotlightOverlayWindow(QWidget):
             self.current_line_width = new_width
             self.update()  # atualiza a tela para refletir a mudança, se necessário
 
-    def capture_screenshot(self, show_after=False):
+    def capture_screenshot(self, show_after=False, generate_blurred=False):
         self._capturing_screenshot = True
         try:
             self.hide_overlay()
@@ -377,7 +381,8 @@ class SpotlightOverlayWindow(QWidget):
 
             # Atualiza o pixmap do overlay (converter QImage para QPixmap)
             self.pixmap = QPixmap.fromImage(qimage)
-            self.blurred_pixmap = apply_blur(self.pixmap)
+            if generate_blurred:
+                self.blurred_pixmap = apply_blur(self.pixmap)
             self._pixmap_cleared = False
 
             # Mostra a janela overlay novamente se foi ocultada
@@ -385,6 +390,8 @@ class SpotlightOverlayWindow(QWidget):
                 self.showFullScreen()
         finally:
             self._capturing_screenshot = False
+
+        return self.pixmap, self.blurred_pixmap
 
     def drawMagnifyingGlass(self, painter, cursor_pos):
         radius = int(self._ctx.current_screen_height) * (

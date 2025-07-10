@@ -82,7 +82,7 @@ class DevicesTab(QWidget):
         if current:
             dev = current.data(QtItem_UserRole)
             QTimer.singleShot(50, lambda: self.change_device(dev))
-            # self._ctx.main_window.preferences_tab.update_modes_list_from_context()
+            self._ctx.main_window.preferences_tab.update_modes_list_from_context()
         else:
             self._ctx.set_active_device(None)
-            # self._ctx.main_window.preferences_tab.update_modes_list_from_context()
+            self._ctx.main_window.preferences_tab.update_modes_list_from_context()

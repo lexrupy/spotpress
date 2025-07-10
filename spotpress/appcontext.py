@@ -13,6 +13,8 @@ class AppContext(QObject):
         log_function=None,
         overlay_window=None,
         show_info_function=None,
+        show_overlay_function=None,
+        hide_overlay_function=None,
         main_window=None,
     ):
         super().__init__()
@@ -21,6 +23,8 @@ class AppContext(QObject):
         self._spotlight_overlay_window = overlay_window
         self._info_overlay_window = None
         self._show_info_function = show_info_function
+        self._show_overlay_function = show_overlay_function
+        self._hide_overlay_function = hide_overlay_function
         self._compatible_modes = []
         self._config = ObservableDict(callback=self._on_config_changed)
         self._support_auto_mode = False
@@ -247,3 +251,11 @@ class AppContext(QObject):
     def show_info(self, message):
         if self._show_info_function:
             self._show_info_function(message)
+
+    def show_overlay(self):
+        if self._show_overlay_function:
+            self._show_overlay_function()
+
+    def hide_overlay(self):
+        if self._hide_overlay_function:
+            self._hide_overlay_function()
