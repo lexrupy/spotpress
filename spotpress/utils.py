@@ -1,5 +1,16 @@
 # import mss
-from spotpress.qtcompat import QColor, QImage, QGuiApplication, QRect
+from spotpress.qtcompat import (
+    QColor,
+    QImage,
+    QPainter,
+    QGuiApplication,
+    QRect,
+    QPixmap,
+    QGraphicsScene,
+    QGraphicsPixmapItem,
+    QGraphicsBlurEffect,
+    Qt_Color_Transparent,
+)
 
 
 MODE_MOUSE = 0
@@ -92,6 +103,26 @@ def get_screen_and_geometry(screen_index):
     return screen, QRect(
         geometry.left(), geometry.top(), geometry.width(), geometry.height()
     )
+
+
+def apply_blur(pixmap: QPixmap, radius: float = 5.0) -> QPixmap:
+
+    # Configura cena gráfica
+    scene = QGraphicsScene()
+    item = QGraphicsPixmapItem(pixmap)
+    blur = QGraphicsBlurEffect()
+    blur.setBlurRadius(radius)
+    item.setGraphicsEffect(blur)
+    scene.addItem(item)
+
+    # Renderiza o resultado
+    result = QPixmap(pixmap.size())
+    result.fill(Qt_Color_Transparent)
+    painter = QPainter(result)
+    scene.render(painter)
+    painter.end()
+
+    return result
 
 
 def get_screen_geometry(screen_index):

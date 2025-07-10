@@ -49,6 +49,7 @@ class ASASmartControlPointer(PointerDevice):
         self._auto_mode_active = False
         self._auto_mode_timeout = 1.0
         self._auto_mode_timer = None
+        self._last_overlay_color_change = 0
         self._button_map = {
             bytes([0, 0, 75, 0]): "PREV",
             bytes([0, 0, 78, 0]): "NEXT",
@@ -277,7 +278,10 @@ class ASASmartControlPointer(PointerDevice):
                     elif current_mode == MODE_LASER:
                         ow.next_laser_color()
                     elif current_mode == MODE_SPOTLIGHT:
-                        ow.change_overlay_color(-1)
+                        now = time.time()
+                        if now - self._last_overlay_color_change > 1.2:
+                            self._last_overlay_color_change = now
+                            ow.change_overlay_color(-1)
             case "G_RIGHT":
                 if ow.is_overlay_actually_visible():
                     if current_mode == MODE_MAG_GLASS:
@@ -285,7 +289,10 @@ class ASASmartControlPointer(PointerDevice):
                     elif current_mode == MODE_LASER:
                         ow.next_laser_color(-1)
                     elif current_mode == MODE_SPOTLIGHT:
-                        ow.change_overlay_color(-1)
+                        now = time.time()
+                        if now - self._last_overlay_color_change > 1.2:
+                            self._last_overlay_color_change = now
+                            ow.change_overlay_color()
             case "HGL+hold":
                 if ow.is_overlay_actually_visible():
                     pass

@@ -1,6 +1,7 @@
 import time
 from spotpress.qtcompat import (
     QApplication,
+    QPainter_Antialiasing,
     QWidget,
     QPainter,
     QColor,
@@ -16,8 +17,9 @@ from spotpress.qtcompat import (
     QPointF,
     QRectF,
     QPoint,
-    QEvent,
+    QPixmap,
     Qt_BlankCursor,
+    Qt_BrushStyle_NoBrush,
     Qt_Color_Transparent,
     Qt_Event_KeyPress,
     Qt_Key_Escape,
@@ -37,6 +39,7 @@ from .utils import (
     MODE_MAP,
     PEN_COLORS,
     SHADE_COLORS,
+    apply_blur,
     capture_monitor_screenshot,
     MODE_SPOTLIGHT,
     MODE_PEN,
@@ -74,7 +77,6 @@ class SpotlightOverlayWindow(QWidget):
         self.overlay_hidden = False
 
         self._auto_mode_enabled = True
-        self._always_take_screenshot = False
 
         self._last_show_overlay_time = 0
 
@@ -97,7 +99,7 @@ class SpotlightOverlayWindow(QWidget):
 
         self.setGeometry(screen_geometry)
 
-        # self.pixmap = QPixmap.fromImage(screenshot)
+        self._pixmap_cleared = False
         self.clear_pixmap()
 
         self.pen_color = PEN_COLORS[self._ctx.config.get("marker_color_index", 0)][0]
@@ -149,10 +151,15 @@ class SpotlightOverlayWindow(QWidget):
         self.last_key_pressed = key
 
     def clear_pixmap(self):
-        if self._always_take_screenshot:
+        if self._pixmap_cleared or self._ctx.config.get(
+            "general_always_capture", False
+        ):
             return
         self.pixmap = QPixmap(self.size())
         self.pixmap.fill(Qt_Color_Transparent)
+        self.blurred_pixmap = QPixmap(self.size())
+        self.blurred_pixmap.fill(Qt_Color_Transparent)
+        self._pixmap_cleared = True
 
     def change_overlay_color(self, dir=1):
         new_index = self._ctx.config["shade_color_index"] + dir
@@ -209,9 +216,10 @@ class SpotlightOverlayWindow(QWidget):
                 elif self._ctx.current_mode == MODE_LASER and self.laser_inverted():
                     self.capture_screenshot(show_after=True)
                 elif self._ctx.current_mode != MODE_MOUSE:
-                    if self._always_take_screenshot:
+                    if self._ctx.config.get("general_always_capture", False):
                         self.capture_screenshot(show_after=True)
                     else:
+                        self.clear_pixmap()
                         self.showFullScreen()
             self.update()
             self.overlay_hidden = False
@@ -369,6 +377,8 @@ class SpotlightOverlayWindow(QWidget):
 
             # Atualiza o pixmap do overlay (converter QImage para QPixmap)
             self.pixmap = QPixmap.fromImage(qimage)
+            self.blurred_pixmap = apply_blur(self.pixmap)
+            self._pixmap_cleared = False
 
             # Mostra a janela overlay novamente se foi ocultada
             if show_after:
@@ -377,13 +387,13 @@ class SpotlightOverlayWindow(QWidget):
             self._capturing_screenshot = False
 
     def drawMagnifyingGlass(self, painter, cursor_pos):
-
         radius = int(self._ctx.current_screen_height) * (
             self._ctx.config["magnify_size"] / 100.0
         )
-        PADDING = 100  # pixels extras de borda
+        PADDING = 100
 
-        if self._ctx.config["magnify_shape"].lower() == "rectangle":
+        shape = self._ctx.config["magnify_shape"].lower()
+        if shape == "rectangle":
             width = radius * 2
             height = int(width * self.mag_aspect_ratio)
             is_ellipse = False
@@ -391,28 +401,40 @@ class SpotlightOverlayWindow(QWidget):
             width = height = radius * 2
             is_ellipse = True
 
-        # Cálculo da área de origem (reduzida pela ampliação)
-        src_width = int(width / self._ctx.config["magnify_zoom"])
-        src_height = int(height / self._ctx.config["magnify_zoom"])
+        zoom = self._ctx.config["magnify_zoom"]
 
-        # Cria imagem com borda transparente
+        bg_mode = int(self._ctx.config.get("magnify_background_mode", 2))
+
+        if bg_mode == 0:  # Blur
+            if self.blurred_pixmap:
+                painter.drawPixmap(0, 0, self.blurred_pixmap)
+            else:
+                painter.drawPixmap(0, 0, self.pixmap)
+        elif bg_mode == 1:  # Shade
+            # Spotlight tradicional com overlay escuro
+            shade_color = SHADE_COLORS[self._ctx.config["shade_color_index"]][0]
+            shade_color.setAlpha(int(self._ctx.config["shade_opacity"] * 255 / 100))
+            painter.fillRect(self.rect(), shade_color)
+        elif bg_mode == 2:  # None
+            painter.drawPixmap(0, 0, self.pixmap)
+
+        # Área nítida (ampliada)
         padded_pixmap = QPixmap(
             self.pixmap.width() + PADDING * 2, self.pixmap.height() + PADDING * 2
         )
-        padded_pixmap.fill(Qt_Color_Transparent)
+        padded_pixmap.fill(Qt.GlobalColor.transparent)
         painter_pad = QPainter(padded_pixmap)
         painter_pad.drawPixmap(PADDING, PADDING, self.pixmap)
         painter_pad.end()
 
-        # Corrige a posição do cursor no espaço com padding
         cursor_pos_padded = QPoint(cursor_pos.x() + PADDING, cursor_pos.y() + PADDING)
 
-        # Calcula retângulo de origem (recorte ampliado)
+        src_width = int(width / zoom)
+        src_height = int(height / zoom)
         x = cursor_pos_padded.x() - src_width // 2
         y = cursor_pos_padded.y() - src_height // 2
         src_rect = QRect(x, y, src_width, src_height)
 
-        # Retângulo de destino (onde será desenhado o zoom)
         dest_rect = QRect(
             int(cursor_pos.x() - width // 2),
             int(cursor_pos.y() - height // 2),
@@ -420,29 +442,42 @@ class SpotlightOverlayWindow(QWidget):
             int(height),
         )
 
-        # Clipping para formato oval ou quadrado
+        # Clip da lente
         if is_ellipse:
             clip_path = QPainterPath()
             clip_path.addEllipse(QRectF(dest_rect))
             painter.setClipPath(clip_path)
 
-        # Desenha a imagem ampliada
+        # Desenha a lente ampliada (sem blur)
         painter.drawPixmap(dest_rect, padded_pixmap, src_rect)
 
         if is_ellipse:
             painter.setClipping(False)
 
-        # Borda branca
-        border_color = QColor(255, 255, 255, 180)
-        pen = QPen(border_color, 2 if not is_ellipse else 4)
-        painter.setPen(pen)
-        painter.setBrush(Qt.BrushStyle.NoBrush)
-        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+        if self._ctx.config.get("magnify_border", False):
 
-        if is_ellipse:
-            painter.drawEllipse(dest_rect)
-        else:
-            painter.drawRect(dest_rect)
+            # Desneho da borda
+            color_index = int(self._ctx.config.get("border_color_index", 0))
+            opacity = int(self._ctx.config.get("border_opacity", 255))
+            border_width = int(self._ctx.config.get("border_width", 3))
+            border_color = PEN_COLORS[color_index][0]
+            border_color.setAlpha(opacity)
+
+            pen = QPen(border_color, border_width)
+            painter.setPen(pen)
+            painter.setBrush(Qt.BrushStyle.NoBrush)
+            painter.setRenderHint(QPainter_Antialiasing)
+            border_rect = dest_rect.adjusted(
+                border_width // 2,
+                border_width // 2,
+                -border_width // 2,
+                -border_width // 2,
+            )
+
+            if is_ellipse:
+                painter.drawEllipse(border_rect)
+            else:
+                painter.drawRect(border_rect)
 
     def drawSpotlight(self, painter, cursor_pos):
 
@@ -450,9 +485,9 @@ class SpotlightOverlayWindow(QWidget):
             self._ctx.config["spotlight_size"] / 100.0
         )
         # Spotlight tradicional com overlay escuro
-        overlay_color = SHADE_COLORS[self._ctx.config["shade_color_index"]][0]
-        overlay_color.setAlpha(int(self._ctx.config["shade_opacity"] * 255 / 100))
-        painter.setBrush(overlay_color)
+        shade_color = SHADE_COLORS[self._ctx.config["shade_color_index"]][0]
+        shade_color.setAlpha(int(self._ctx.config["shade_opacity"] * 255 / 100))
+        painter.setBrush(shade_color)
         painter.setPen(QPen(Qt.PenStyle.NoPen))
         spotlight_path = QPainterPath()
         spotlight_path.addRect(QRectF(self.rect()))
@@ -461,16 +496,29 @@ class SpotlightOverlayWindow(QWidget):
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
         painter.drawPath(spotlight_path)
 
+        if self._ctx.config.get("spotlight_border", False):
+            color_index = int(self._ctx.config.get("border_color_index", 0))
+            opacity = int(self._ctx.config.get("border_opacity", 255))
+            width = int(self._ctx.config.get("border_width", 3))
+
+            color = PEN_COLORS[color_index][0]
+            color.setAlpha(opacity)
+            border_radius = size - width / 2
+
+            pen = QPen(color, width)
+            painter.setPen(pen)
+            painter.setBrush(Qt_BrushStyle_NoBrush)
+            painter.drawEllipse(QPointF(cursor_pos), border_radius, border_radius)
+
     def drawLaser(self, painter, cursor_pos):
         size = int(self._ctx.current_screen_height) * (
             self._ctx.config["laser_dot_size"] / 100.0
         )
 
-        half_size = size // 2
-        # Laser pointer com sombras e círculo central
-
         color = LASER_COLORS[self._ctx.config["laser_color_index"]][0]
+        half_size = size // 2
 
+        # Se for a cor transparente desenha invertido
         if color == LASER_COLORS[-1][0]:
             laser_rect = QRect(
                 int(cursor_pos.x() - half_size),
@@ -486,35 +534,50 @@ class SpotlightOverlayWindow(QWidget):
 
             # Clipa o círculo para desenhar só o laser invertido dentro dele
             clip_path = QPainterPath()
-            clip_path.addEllipse(QPointF(cursor_pos), half_size, half_size)
+            clip_path.addEllipse(QPointF(cursor_pos), half_size + 0.5, half_size + 0.5)
+
             painter.setClipPath(clip_path)
             painter.drawPixmap(laser_rect, inverted_pixmap)
             painter.setClipping(False)
-
             if self._ctx.config["laser_reflection"]:
-                # Agora desenha as sombras ao redor, mas **fora** do círculo
                 for margin, alpha in [(12, 50), (8, 80), (4, 110)]:
                     outer_radius = half_size + margin
-                    outer_path = QPainterPath()
-                    outer_path.addEllipse(
+                    outer_size = size + 2 * margin
+                    outer_rect = QRect(
+                        int(cursor_pos.x() - outer_radius),
+                        int(cursor_pos.y() - outer_radius),
+                        int(outer_size),
+                        int(outer_size),
+                    )
+
+                    # Recorta e inverte a imagem da região
+                    region = self.pixmap.copy(outer_rect)
+                    image = region.toImage()
+                    image.invertPixels()
+                    inverted = QPixmap.fromImage(image)
+
+                    # Cria máscara circular para aplicar apenas na borda (anel)
+                    clip_path = QPainterPath()
+                    clip_path.addEllipse(
                         QPointF(cursor_pos), outer_radius, outer_radius
                     )
-                    # subtrai o círculo central
-                    outer_path -= clip_path
-                    shadow_color = QColor(255, 255, 255, alpha)
-                    painter.setBrush(shadow_color)
-                    painter.setPen(QPen(Qt.PenStyle.NoPen))
-                    painter.drawPath(outer_path)
+                    clip_path_inner = QPainterPath()
+                    clip_path_inner.addEllipse(
+                        QPointF(cursor_pos), half_size, half_size
+                    )
+                    clip_path -= clip_path_inner
 
-                # borda branca (opcional)
-                pen = QPen(QColor(255, 255, 255, 200))
-                pen.setWidth(2)
-                painter.setPen(pen)
-                painter.setBrush(Qt.BrushStyle.NoBrush)
-                painter.setRenderHint(QPainter.RenderHint.Antialiasing)
-                painter.drawEllipse(QPointF(cursor_pos), half_size, half_size)
+                    # Aplica clipping e opacidade
+                    painter.save()
+                    painter.setClipPath(clip_path)
+                    painter.setOpacity(alpha / 255.0)
+                    painter.drawPixmap(outer_rect, inverted)
+                    painter.restore()
 
         else:
+
+            opacity = max(1, int(self._ctx.config["laser_opacity"] * 255 / 100))
+            color.setAlpha(opacity)
 
             center_x = int(cursor_pos.x() - size // 2)
             center_y = int(cursor_pos.y() - size // 2)

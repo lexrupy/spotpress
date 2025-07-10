@@ -15,6 +15,8 @@ from spotpress.qtcompat import (
     QGridLayout,
     QListWidget,
     QGroupBox,
+    QRadioButton,
+    QButtonGroup,
     QIcon,
     QPixmap,
     QColor,
@@ -89,9 +91,7 @@ class PreferencesTab(QWidget):
             QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed
         )
         self.spotlight_size.valueChanged.connect(self.on_spotlight_size_changed)
-        self.spotlight_shade = QCheckBox("Show shade")
-        self.spotlight_shade.stateChanged.connect(self.on_spotlight_shade_changed)
-        self.spotlight_border = QCheckBox("Show border")
+        self.spotlight_border = QCheckBox("Border")
         self.spotlight_border.stateChanged.connect(self.on_spotlight_border_changed)
 
         spotlight_group = make_group("Spotlight")
@@ -101,8 +101,7 @@ class PreferencesTab(QWidget):
         spotlight_layout.addWidget(QLabel("Size:"), 1, 0)
         spotlight_layout.addWidget(self.spotlight_size, 1, 1)
         spotlight_layout.addWidget(QLabel("% of screen height"), 1, 2)
-        spotlight_layout.addWidget(self.spotlight_shade, 2, 0, 1, 2)
-        spotlight_layout.addWidget(self.spotlight_border, 2, 2)
+        spotlight_layout.addWidget(self.spotlight_border, 2, 0)
         spotlight_group.setLayout(spotlight_layout)
         left_layout.addWidget(spotlight_group)
 
@@ -117,8 +116,29 @@ class PreferencesTab(QWidget):
             QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed
         )
         self.magnify_size.valueChanged.connect(self.on_magnify_size_changed)
-        self.magnify_border = QCheckBox("Show border")
+        self.magnify_border = QCheckBox("Border")
         self.magnify_border.stateChanged.connect(self.on_magnify_border_changed)
+
+        # self.magnify_shade = QCheckBox("Show shade")
+        # self.magnify_shade.stateChanged.connect(self.on_magnify_shade_changed)
+        self.magnify_blur_radio = QRadioButton("Blur")
+        self.magnify_shade_radio = QRadioButton("Shade")
+        self.magnify_none_radio = QRadioButton("None")
+
+        self.magnify_radio_group = QButtonGroup()
+        self.magnify_radio_group.addButton(self.magnify_blur_radio, 0)
+        self.magnify_radio_group.addButton(self.magnify_shade_radio, 1)
+        self.magnify_radio_group.addButton(self.magnify_none_radio, 2)
+
+        self.magnify_radio_group.buttonClicked.connect(
+            self.on_magnify_background_changed
+        )
+
+        radio_layout = QHBoxLayout()
+        radio_layout.addWidget(self.magnify_blur_radio)
+        radio_layout.addWidget(self.magnify_shade_radio)
+        radio_layout.addWidget(self.magnify_none_radio)
+
         self.magnify_zoom = QSpinBox()
         self.magnify_zoom.setMaximum(5)
         self.magnify_zoom.setMinimum(2)
@@ -131,7 +151,9 @@ class PreferencesTab(QWidget):
         magnify_layout.addWidget(QLabel("Size:"), 1, 0)
         magnify_layout.addWidget(self.magnify_size, 1, 1)
         magnify_layout.addWidget(QLabel("% of screen height"), 1, 2)
-        magnify_layout.addWidget(self.magnify_border, 2, 0, 1, 3)
+        magnify_layout.addWidget(self.magnify_border, 2, 0)
+        magnify_layout.addWidget(QLabel("Background:"), 2, 1)
+        magnify_layout.addLayout(radio_layout, 2, 2)
         magnify_layout.addWidget(QLabel("Zoom level:"), 3, 0)
         magnify_layout.addWidget(self.magnify_zoom, 3, 1, 1, 2)
         magnify_group.setLayout(magnify_layout)
@@ -329,11 +351,11 @@ class PreferencesTab(QWidget):
             cfg = self._ctx.config
             cfg["spotlight_shape"] = self.spotlight_shape.currentText()
             cfg["spotlight_size"] = self.spotlight_size.value()
-            cfg["spotlight_shade"] = self.spotlight_shade.isChecked()
             cfg["spotlight_border"] = self.spotlight_border.isChecked()
             cfg["magnify_shape"] = self.magnify_shape.currentText()
             cfg["magnify_size"] = self.magnify_size.value()
             cfg["magnify_border"] = self.magnify_border.isChecked()
+            cfg["magnify_background_mode"] = str(self.magnify_radio_group.checkedId())
             cfg["magnify_zoom"] = self.magnify_zoom.value()
             cfg["laser_dot_size"] = self.laser_dot_size.value()
             cfg["laser_color_index"] = self.laser_color.currentIndex()
@@ -412,7 +434,7 @@ class PreferencesTab(QWidget):
     def on_spotlight_size_changed(self):
         self.update_context_config()
 
-    def on_spotlight_shade_changed(self):
+    def on_magnify_background_changed(self):
         self.update_context_config()
 
     def on_spotlight_border_changed(self):
@@ -483,18 +505,18 @@ class PreferencesTab(QWidget):
 
         if resposta == QMessageBox.StandardButton.Yes:
             self.spotlight_size.setValue(35)
-            self.spotlight_shade.setChecked(True)
+            # self.magnify_shade.setChecked(False)
             self.spotlight_shape.setCurrentIndex(0)
             self.magnify_size.setValue(35)
             self.magnify_border.setChecked(True)
             self.magnify_shape.setCurrentIndex(1)
-            self.laser_dot_size.setValue(20)
-            self.laser_opacity.setValue(10)
+            self.laser_dot_size.setValue(5)
+            self.laser_opacity.setValue(60)
             self.laser_reflection.setChecked(True)
             self.marker_width.setValue(20)
-            self.marker_opacity.setValue(0)
+            self.marker_opacity.setValue(90)
             self.marker_color.setCurrentIndex(1)
-            self.shade_opacity.setValue(5)
+            self.shade_opacity.setValue(90)
             self.border_opacity.setValue(90)
             self.border_width.setValue(16)
             self.border_color.setCurrentIndex(7)  # White
@@ -525,7 +547,6 @@ class PreferencesTab(QWidget):
             )
         )
         self.spotlight_size.setValue(getint("Spotlight", "size", 35))
-        self.spotlight_shade.setChecked(getbool("Spotlight", "shade", True))
         self.spotlight_border.setChecked(getbool("Spotlight", "border", True))
 
         self.magnify_shape.setCurrentIndex(
@@ -538,17 +559,23 @@ class PreferencesTab(QWidget):
         self.magnify_border.setChecked(getbool("Magnify", "border", True))
         self.magnify_zoom.setValue(getint("Magnify", "zoom", 2))
 
-        self.laser_dot_size.setValue(getint("Laser", "dot_size", 20))
+        btn = self.magnify_radio_group.button(getint("Magnify", "background_mode", 2))
+        if btn is not None:
+            btn.setChecked(True)
+        else:
+            self.magnify_none_radio.setChecked(True)  # fallback
+
+        self.laser_dot_size.setValue(getint("Laser", "dot_size", 5))
         self.laser_color.setCurrentIndex(getint("Laser", "color_index", 0))
-        self.laser_opacity.setValue(getint("Laser", "opacity", 10))
+        self.laser_opacity.setValue(getint("Laser", "opacity", 60))
         self.laser_reflection.setChecked(getbool("Laser", "reflection", True))
 
         self.marker_width.setValue(getint("Marker", "width", 20))
         self.marker_color.setCurrentIndex(getint("Marker", "color_index", 1))
-        self.marker_opacity.setValue(getint("Marker", "opacity", 0))
+        self.marker_opacity.setValue(getint("Marker", "opacity", 90))
 
         self.shade_color.setCurrentIndex(getint("Shade", "color_index", 0))
-        self.shade_opacity.setValue(getint("Shade", "opacity", 5))
+        self.shade_opacity.setValue(getint("Shade", "opacity", 95))
 
         self.border_color.setCurrentIndex(getint("Border", "color_index", 7))
         self.border_opacity.setValue(getint("Border", "opacity", 90))
@@ -603,13 +630,13 @@ class PreferencesTab(QWidget):
         config["Spotlight"] = {
             "shape": self.spotlight_shape.currentText(),
             "size": str(self.spotlight_size.value()),
-            "shade": str(self.spotlight_shade.isChecked()),
             "border": str(self.spotlight_border.isChecked()),
         }
         config["Magnify"] = {
             "shape": self.magnify_shape.currentText(),
             "size": str(self.magnify_size.value()),
             "border": str(self.magnify_border.isChecked()),
+            "background_mode": str(self.magnify_radio_group.checkedId()),
             "zoom": str(self.magnify_zoom.value()),
         }
         config["Laser"] = {
