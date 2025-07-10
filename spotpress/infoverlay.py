@@ -15,25 +15,25 @@ class InfOverlayWindow(QWidget):
         self.screen_geometry = screen_geometry
 
         self.setWindowFlags(
-            Qt.FramelessWindowHint
-            | Qt.WindowStaysOnTopHint
-            | Qt.X11BypassWindowManagerHint
-            | Qt.Tool
+            Qt.FramelessWindowHint  # pyright: ignore
+            | Qt.WindowStaysOnTopHint  # pyright: ignore
+            | Qt.X11BypassWindowManagerHint  # pyright: ignore
+            | Qt.Tool  # pyright: ignore
         )
-        self.setAttribute(Qt.WA_TranslucentBackground)
-        self.setAttribute(Qt.WA_ShowWithoutActivating)
+        self.setAttribute(Qt.WA_TranslucentBackground)  # pyright: ignore
+        self.setAttribute(Qt.WA_ShowWithoutActivating)  # pyright: ignore
 
         self.label = QLabel(self)
-        self.label.setAlignment(Qt.AlignCenter)
+        self.label.setAlignment(Qt.AlignCenter)  # pyright: ignore
         self.label.setStyleSheet("color: white;")
-        self.font = QFont("Arial", 64, QFont.Bold)
+        self.font = QFont("Arial", 44, QFont.Bold)
         self.label.setFont(self.font)
 
     def show_message(self, text):
         self.label.setText(text)
 
         # Calcula o tamanho da janela com base no texto
-        metrics = QFontMetrics(self.font)
+        metrics = QFontMetrics(self.font)  # pyright: ignore
         text_width = metrics.horizontalAdvance(text)
         text_height = metrics.height()
 
@@ -60,17 +60,5 @@ class InfOverlayWindow(QWidget):
         painter = QPainter(self)
         painter.setRenderHint(QPainter.Antialiasing)
         painter.setBrush(QColor(0, 0, 0, 180))  # preto translúcido
-        painter.setPen(Qt.NoPen)
+        painter.setPen(Qt.NoPen)  # pyright: ignore
         painter.drawRoundedRect(self.rect(), 20, 20)
-
-
-# class InfOverlayController(QObject):
-#     show_requested = pyqtSignal(str, int)
-#
-#     def __init__(self, overlay: InfOverlayWindow):
-#         super().__init__()
-#         self.overlay = overlay
-#         self.show_requested.connect(self.overlay.show_message)
-#
-#     def show_message(self, text, duration=2000):
-#         self.show_requested.emit(text, duration)

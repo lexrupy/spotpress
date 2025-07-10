@@ -1,4 +1,3 @@
-import os
 import time
 from PyQt5.QtWidgets import QApplication, QWidget
 from PyQt5.QtGui import (
@@ -37,18 +36,18 @@ class SpotlightOverlayWindow(QWidget):
         self._ctx = context
 
         if self._ctx.windows_os:
-            QApplication.instance().installEventFilter(self)
+            QApplication.instance().installEventFilter(self)  # pyright: ignore
 
         self.setWindowFlags(
-            Qt.FramelessWindowHint
-            | Qt.WindowStaysOnTopHint
-            | Qt.X11BypassWindowManagerHint
-            | Qt.Tool
+            Qt.FramelessWindowHint  # pyright: ignore
+            | Qt.WindowStaysOnTopHint  # pyright: ignore
+            | Qt.X11BypassWindowManagerHint  # pyright: ignore
+            | Qt.Tool  # pyright: ignore
         )
-        self.setAttribute(Qt.WA_TranslucentBackground)
-        self.setAttribute(Qt.WA_ShowWithoutActivating)
-        self.setAttribute(Qt.WA_TransparentForMouseEvents)
-        self.setCursor(Qt.BlankCursor)
+        self.setAttribute(Qt.WA_TranslucentBackground)  # pyright: ignore
+        self.setAttribute(Qt.WA_ShowWithoutActivating)  # pyright: ignore
+        self.setAttribute(Qt.WA_TransparentForMouseEvents)  # pyright: ignore
+        self.setCursor(Qt.BlankCursor)  # pyright: ignore
 
         self.overlay_hidden = False
 
@@ -99,7 +98,8 @@ class SpotlightOverlayWindow(QWidget):
         return 0  # fallback
 
     def eventFilter(self, a0, a1):
-        if a1.type() == QEvent.KeyPress:
+        if a1.type() == QEvent.KeyPress:  # pyright: ignore
+
             self.do_keypress(a1)
             return True  # impede propagação se quiser
         return False
@@ -108,16 +108,19 @@ class SpotlightOverlayWindow(QWidget):
         key = event.key()
         now = time.time()
 
-        if key == Qt.Key_Escape:
+        if key == Qt.Key_Escape:  # pyright: ignore
+
             if (
                 now - self.last_key_time < 1.0
-                and self.last_key_pressed == Qt.Key_Escape
+                and self.last_key_pressed == Qt.Key_Escape  # pyright: ignore
             ):
                 self.quit()
-        elif key == Qt.Key_P:
+        elif key == Qt.Key_P:  # pyright: ignore
+
             self.capture_screenshot()
             self.update()
-        elif key == Qt.Key_M:
+        elif key == Qt.Key_M:  # pyright: ignore
+
             self.switch_mode(step=1)
             self.update()
 
@@ -128,7 +131,7 @@ class SpotlightOverlayWindow(QWidget):
         if self._always_take_screenshot:
             return
         self.pixmap = QPixmap(self.size())
-        self.pixmap.fill(Qt.transparent)
+        self.pixmap.fill(Qt.transparent)  # pyright: ignore
 
     def change_overlay_color(self, dir=1):
         new_index = self._ctx.config["shade_color_index"] + dir
@@ -375,8 +378,7 @@ class SpotlightOverlayWindow(QWidget):
         padded_pixmap = QPixmap(
             self.pixmap.width() + PADDING * 2, self.pixmap.height() + PADDING * 2
         )
-        padded_pixmap.fill(Qt.transparent)
-
+        padded_pixmap.fill(Qt.transparent)  # pyright: ignore
         painter_pad = QPainter(padded_pixmap)
         painter_pad.drawPixmap(PADDING, PADDING, self.pixmap)
         painter_pad.end()
@@ -413,7 +415,7 @@ class SpotlightOverlayWindow(QWidget):
         border_color = QColor(255, 255, 255, 180)
         pen = QPen(border_color, 2 if not is_ellipse else 4)
         painter.setPen(pen)
-        painter.setBrush(Qt.NoBrush)
+        painter.setBrush(Qt.NoBrush)  # pyright: ignore
         painter.setRenderHint(QPainter.Antialiasing)
 
         if is_ellipse:
@@ -430,8 +432,7 @@ class SpotlightOverlayWindow(QWidget):
         overlay_color = SHADE_COLORS[self._ctx.config["shade_color_index"]][0]
         overlay_color.setAlpha(int(self._ctx.config["shade_opacity"] * 255 / 100))
         painter.setBrush(overlay_color)
-        painter.setPen(Qt.NoPen)
-
+        painter.setPen(Qt.NoPen)  # pyright: ignore
         spotlight_path = QPainterPath()
         spotlight_path.addRect(QRectF(self.rect()))
         spotlight_path.addEllipse(cursor_pos, size, size)
@@ -475,20 +476,18 @@ class SpotlightOverlayWindow(QWidget):
                     outer_radius = half_size + margin
                     outer_path = QPainterPath()
                     outer_path.addEllipse(cursor_pos, outer_radius, outer_radius)
-
                     # subtrai o círculo central
                     outer_path -= clip_path
-
                     shadow_color = QColor(255, 255, 255, alpha)
                     painter.setBrush(shadow_color)
-                    painter.setPen(Qt.NoPen)
+                    painter.setPen(Qt.NoPen)  # pyright: ignore
                     painter.drawPath(outer_path)
 
                 # borda branca (opcional)
                 pen = QPen(QColor(255, 255, 255, 200))
                 pen.setWidth(2)
                 painter.setPen(pen)
-                painter.setBrush(Qt.NoBrush)
+                painter.setBrush(Qt.NoBrush)  # pyright: ignore
                 painter.setRenderHint(QPainter.Antialiasing)
                 painter.drawEllipse(cursor_pos, half_size, half_size)
 
@@ -504,7 +503,8 @@ class SpotlightOverlayWindow(QWidget):
                     shadow_color = QColor(color)
                     shadow_color.setAlpha(alpha)
                     painter.setBrush(shadow_color)
-                    painter.setPen(Qt.NoPen)
+                    painter.setPen(Qt.NoPen)  # pyright: ignore
+
                     painter.drawEllipse(
                         int(center_x - margin),
                         int(center_y - margin),
@@ -513,7 +513,8 @@ class SpotlightOverlayWindow(QWidget):
                     )
 
             painter.setBrush(color)
-            painter.setPen(Qt.NoPen)
+            painter.setPen(Qt.NoPen)  # pyright: ignore
+
             painter.drawEllipse(center_x, center_y, int(size), int(size))
 
     def drawLines(self, painter, cursor_pos):
@@ -524,9 +525,9 @@ class SpotlightOverlayWindow(QWidget):
             pen = QPen(
                 path["color"],
                 path["width"],
-                Qt.SolidLine,
-                Qt.RoundCap,
-                Qt.RoundJoin,
+                Qt.SolidLine,  # pyright: ignore
+                Qt.RoundCap,  # pyright: ignore
+                Qt.RoundJoin,  # pyright: ignore
             )
             painter.setPen(pen)
             if len(path["points"]) > 1:
@@ -538,9 +539,9 @@ class SpotlightOverlayWindow(QWidget):
             pen = QPen(
                 self.pen_color,
                 self.current_line_width,
-                Qt.SolidLine,
-                Qt.RoundCap,
-                Qt.RoundJoin,
+                Qt.SolidLine,  # pyright: ignore
+                Qt.RoundCap,  # pyright: ignore
+                Qt.RoundJoin,  # pyright: ignore
             )
             painter.setPen(pen)
             for i in range(len(self.current_path) - 1):
@@ -549,7 +550,8 @@ class SpotlightOverlayWindow(QWidget):
         cursor_pos = self.mapFromGlobal(QCursor.pos())
         brush = QBrush(self.pen_color)
         painter.setBrush(brush)
-        painter.setPen(Qt.NoPen)
+        painter.setPen(Qt.NoPen)  # pyright: ignore
+
         self.draw_pen_tip(painter, cursor_pos, size=self.current_line_width * 4)
 
     def paintEvent(self, event):
@@ -593,7 +595,8 @@ class SpotlightOverlayWindow(QWidget):
         path.closeSubpath()
 
         painter.setBrush(QBrush(self.pen_color))
-        painter.setPen(Qt.NoPen)
+        painter.setPen(Qt.NoPen)  # pyright: ignore
+
         painter.drawPath(path)
 
     def start_pen_path(self):

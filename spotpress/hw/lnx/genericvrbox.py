@@ -9,7 +9,7 @@ from spotpress.utils import (
     MODE_MOUSE,
     MODE_SPOTLIGHT,
 )
-from .pointerdevice import BasePointerDevice
+from spotpress.hw.lnx.pointerdevice import BasePointerDevice
 
 
 class GenericVRBoxPointer(BasePointerDevice):

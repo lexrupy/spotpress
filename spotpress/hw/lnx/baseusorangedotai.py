@@ -11,7 +11,7 @@ from spotpress.utils import (
     MODE_SPOTLIGHT,
     MODE_MAG_GLASS,
 )
-from .pointerdevice import BasePointerDevice
+from spotpress.hw.lnx.pointerdevice import BasePointerDevice
 
 
 class BaseusOrangeDotAI(BasePointerDevice):

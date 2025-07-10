@@ -16,7 +16,7 @@ from PyQt5.QtWidgets import (
     QMainWindow,
     QDesktopWidget,
 )
-from PyQt5.QtGui import QIcon, QPainter, QPixmap, QColor
+from PyQt5.QtGui import QIcon, QPixmap
 from PyQt5.QtCore import Qt, pyqtSignal, QTimer
 from spotpress.appcontext import AppContext
 from spotpress.spotlight import SpotlightOverlayWindow
@@ -40,11 +40,12 @@ warnings.filterwarnings(
 CONFIG_PATH = os.path.expanduser("~/.config/spotpress/config.ini")
 
 WINDOWS_OS = False
+
 if sys.platform.startswith("win"):
     WINDOWS_OS = True
-    from spotpress.devices_win import DeviceMonitor
+    from spotpress.hw.win.devices import DeviceMonitor
 else:
-    from spotpress.devices import DeviceMonitor
+    from spotpress.hw.lnx.devices import DeviceMonitor
 
 
 class SpotpressPreferences(QMainWindow):
@@ -58,7 +59,9 @@ class SpotpressPreferences(QMainWindow):
         self.setGeometry(100, 100, 650, 550)
 
         # Quando fechar a janela, ao invés de fechar, esconder
-        self.setWindowFlags(self.windowFlags() | Qt.WindowMinimizeButtonHint)
+        self.setWindowFlags(
+            self.windowFlags() | Qt.WindowMinimizeButtonHint  # pyright: ignore
+        )
         if WINDOWS_OS:
             self.setMinimumSize(650, 760)
         else:
@@ -140,7 +143,8 @@ class SpotpressPreferences(QMainWindow):
         self.move(qt_rectangle.topLeft())
 
     def on_tray_icon_activated(self, reason):
-        if reason == QSystemTrayIcon.Trigger:
+        if reason == QSystemTrayIcon.Trigger:  # pyright: ignore
+
             if self.isVisible():
                 self.hide()
             else:
@@ -158,7 +162,7 @@ class SpotpressPreferences(QMainWindow):
         self.devices_tab.devices_list.setEnabled(True)
         for dev in devices:
             item = QListWidgetItem(dev.display_name())
-            item.setData(Qt.UserRole, dev)
+            item.setData(Qt.UserRole, dev)  # pyright: ignore
             self.devices_tab.devices_list.addItem(item)
 
         self.preferences_tab.update_modes_list_from_context()
@@ -213,11 +217,6 @@ class SpotpressPreferences(QMainWindow):
         self.activateWindow()
 
     def show_about(self):
-        # QMessageBox.information(
-        #     self,
-        #     "About SpotPress...",
-        #     "SpotPress: A Spotlight Aplication For Presentations.\nLicenced under LGPL\nContributors:\nAlexandre da Silva <lexrupy>",
-        # )
         msg = QMessageBox(self)
         msg.setWindowTitle("About SpotPress...")
         msg.setText(

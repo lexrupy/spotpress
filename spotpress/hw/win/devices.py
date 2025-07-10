@@ -2,9 +2,9 @@ import time
 import threading
 from pywinusb import hid
 
-from spotpress.genericvrbox_win import GenericVRBoxPointer
-from spotpress.baseusorangedotai_win import BaseusOrangeDotAI
-from spotpress.virtualdevice_win import VirtualPointer
+from spotpress.hw.win.genericvrbox import GenericVRBoxPointer
+from spotpress.hw.win.baseusorangedotai import BaseusOrangeDotAI
+from spotpress.hw.win.virtualdevice import VirtualPointer
 
 DEVICE_CLASSES = {BaseusOrangeDotAI, GenericVRBoxPointer, VirtualPointer}
 

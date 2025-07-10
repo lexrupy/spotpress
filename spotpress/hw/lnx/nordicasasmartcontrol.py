@@ -11,7 +11,7 @@ from spotpress.utils import (
     MODE_MAG_GLASS,
     MODE_PEN,
 )
-from .pointerdevice import BasePointerDevice
+from spotpress.hw.lnx.pointerdevice import BasePointerDevice
 
 
 class ASASmartControlPointer(BasePointerDevice):

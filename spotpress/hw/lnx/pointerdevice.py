@@ -5,16 +5,7 @@ import select
 import glob
 import evdev
 
-
-class SingletonMeta(type):
-    _instances = {}
-
-    def __call__(cls, *args, **kwargs):
-        instance = cls._instances.get(cls)
-        if instance is None:
-            instance = super().__call__(*args, **kwargs)
-            cls._instances[cls] = instance
-        return instance
+from spotpress.utils import SingletonMeta
 
 
 class BasePointerDevice(metaclass=SingletonMeta):
@@ -111,13 +102,6 @@ class BasePointerDevice(metaclass=SingletonMeta):
             self._ctx.log(f"- Removendo path {path} de {self.__class__.__name__}")
             self._known_paths.remove(path)
         return len(self._known_paths) == 0  # retorna True se ficou vazio
-
-    # def display_name(self):
-    #     name = getattr(self.__class__, "PRODUCT_DESCRIPTION", self._device_name)
-    #     if name is None:
-    #         name = self.__class__.__name__
-    #     return name
-    #
 
     def __str__(self):
         return self.display_name()

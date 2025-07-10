@@ -1,7 +1,7 @@
 import time
 import threading
 from spotpress.utils import MODE_LASER, MODE_MAG_GLASS, MODE_MOUSE, MODE_SPOTLIGHT
-from .pointerdevice_win import BasePointerDevice
+from spotpress.hw.win.pointerdevice import BasePointerDevice
 
 
 class GenericVRBoxPointer(BasePointerDevice):

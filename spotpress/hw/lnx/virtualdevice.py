@@ -6,7 +6,7 @@ from spotpress.utils import (
     MODE_PEN,
 )
 
-from .pointerdevice_win import BasePointerDevice
+from spotpress.hw.lnx.pointerdevice import BasePointerDevice
 
 
 class VirtualPointer(BasePointerDevice):
@@ -17,8 +17,8 @@ class VirtualPointer(BasePointerDevice):
     DOUBLE_CLICK_INTERVAL = 0.4  # segundos
     REPEAT_INTERVAL = 0.05
 
-    def __init__(self, app_ctx, hid_device):
-        super().__init__(app_ctx=app_ctx, hid_device=hid_device)
+    def __init__(self, app_ctx, hidraw_path):
+        super().__init__(app_ctx=app_ctx, hidraw_path=hidraw_path)
 
         self._ctx.compatible_modes = [
             MODE_MOUSE,
@@ -28,10 +28,15 @@ class VirtualPointer(BasePointerDevice):
             MODE_PEN,
         ]
 
-    #
     def monitor(self):
         pass
 
     @classmethod
     def is_known_device(cls, device_info):
+        return True
+
+    def add_known_path(self, path):
+        return True
+
+    def remove_known_path(self, path):
         return True

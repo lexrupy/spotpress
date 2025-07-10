@@ -49,6 +49,17 @@ MODE_NAME_TO_ID = {v: k for k, v in MODE_MAP.items()}
 DEFAULT_MODES = [(name, True) for name in MODE_NAME_TO_ID.keys()]
 
 
+class SingletonMeta(type):
+    _instances = {}
+
+    def __call__(cls, *args, **kwargs):
+        instance = cls._instances.get(cls)
+        if instance is None:
+            instance = super().__call__(*args, **kwargs)
+            cls._instances[cls] = instance
+        return instance
+
+
 class ObservableDict(dict):
     def __init__(self, *args, callback=None, **kwargs):
         super().__init__(*args, **kwargs)
@@ -89,5 +100,5 @@ def get_screen_geometry(screen_index):
 
 def capture_monitor_screenshot(screen_index):
     screen, _ = get_screen_and_geometry(screen_index)
-    screenshot = screen.grabWindow(0)
+    screenshot = screen.grabWindow(0)  # pyright: ignore
     return screenshot.toImage()

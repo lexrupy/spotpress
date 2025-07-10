@@ -66,20 +66,17 @@ class BasePointerDevice(metaclass=SingletonMeta):
 
     @classmethod
     def find_all_devices(cls):
-        all_devices = hid.HidDeviceFilter(vendor_id=cls.VENDOR_ID, product_id=cls.PRODUCT_ID).get_devices()
+        all_devices = hid.HidDeviceFilter(
+            vendor_id=cls.VENDOR_ID, product_id=cls.PRODUCT_ID
+        ).get_devices()
         return [dev for dev in all_devices if cls.is_known_device(dev)]
 
     @classmethod
     def is_known_device(cls, device):
-        return (
-            device.vendor_id == cls.VENDOR_ID
-            and device.product_id == cls.PRODUCT_ID
-        )
+        return device.vendor_id == cls.VENDOR_ID and device.product_id == cls.PRODUCT_ID
 
     def emit_key_press(self, key):
-        """Opcional: use alguma integração com uinput-like API emulando eventos"""
         self._ctx.log(f"> Simulando tecla: {key} (pressionar e soltar)")
 
     def emit_key_chord(self, keys):
-        """Opcional: simular combinação de teclas"""
         self._ctx.log(f"> Simulando atalho: {keys}")

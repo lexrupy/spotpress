@@ -5,10 +5,10 @@ import glob
 import threading
 import uinput
 
-from spotpress.genericvrbox import GenericVRBoxPointer
-from spotpress.baseusorangedotai import BaseusOrangeDotAI
-from spotpress.nordicasasmartcontrol import ASASmartControlPointer
-from spotpress.virtualdevice import VirtualPointer
+from spotpress.hw.lnx.genericvrbox import GenericVRBoxPointer
+from spotpress.hw.lnx.baseusorangedotai import BaseusOrangeDotAI
+from spotpress.hw.lnx.nordicasasmartcontrol import ASASmartControlPointer
+from spotpress.hw.lnx.virtualdevice import VirtualPointer
 
 
 # DEVICE_CLASSES = {BaseusOrangeDotAI, GenericVRBoxPointer, VirtualPointer}
