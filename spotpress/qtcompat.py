@@ -126,7 +126,18 @@ try:
 
     SP_QT_VERSION = 6
 except ImportError:
-    from PyQt5.QtCore import Qt, QEvent, QObject
+    from PyQt5.QtCore import (
+        Qt,
+        QEvent,
+        QObject,
+        QPoint,
+        QPointF,
+        Qt,
+        pyqtSignal,
+        QTimer,
+        QRect,
+        QRectF,
+    )
     from PyQt5.QtWidgets import (
         QApplication,
         QMenu,
@@ -170,8 +181,6 @@ except ImportError:
         QImage,
         QFontMetrics,
     )
-
-    from PyQt5.QtCore import QPoint, QPointF, Qt, pyqtSignal, QTimer, QRect, QRectF
 
     Qt_WindowMinimizeButtonHint = Qt.WindowMinimizeButtonHint
     Qt_WindowType_Tool = Qt.Tool

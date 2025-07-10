@@ -56,7 +56,9 @@ class SpotlightOverlayWindow(QWidget):
         self._ctx = context
 
         if self._ctx.windows_os:
-            QApplication.instance().installEventFilter(self)
+            instance = QApplication.instance()
+            if instance:
+                instance.installEventFilter(self)
 
         self.setWindowFlags(
             Qt_WindowType_FramelessWindowHint
@@ -118,8 +120,7 @@ class SpotlightOverlayWindow(QWidget):
         return 0  # fallback
 
     def eventFilter(self, a0, a1):
-        if a1.type() == Qt_Event_KeyPress:
-
+        if a1 and a1.type() == Qt_Event_KeyPress:
             self.do_keypress(a1)
             return True  # impede propagação se quiser
         return False

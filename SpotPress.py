@@ -46,10 +46,10 @@ else:
     from spotpress.hw.lnx.devices import DeviceMonitor
 
 
-# Redireciona mensagens do Qt para /dev/null
 if not WINDOWS_OS and SP_QT_VERSION == 5:
     import ctypes
 
+    # Redireciona mensagens do Qt para /dev/null
     ctypes.CDLL(None).freopen(
         b"/dev/null", b"w", ctypes.c_void_p.in_dll(ctypes.CDLL(None), "stderr")
     )

@@ -39,14 +39,14 @@ class InfOverlayWindow(QWidget):
         self.label = QLabel(self)
         self.label.setAlignment(Qt_AlignCenter)
         self.label.setStyleSheet("color: white;")
-        self.font = QFont("Arial", 44, Qt_FontWeight_Bold)
-        self.label.setFont(self.font)
+        self.font = QFont("Arial", 44, Qt_FontWeight_Bold)  # pyright: ignore
+        self.label.setFont(self.font)  # pyright: ignore
 
     def show_message(self, text):
         self.label.setText(text)
 
         # Calcula o tamanho da janela com base no texto
-        metrics = QFontMetrics(self.font)
+        metrics = QFontMetrics(self.font)  # pyright: ignore
         text_width = metrics.horizontalAdvance(text)
         text_height = metrics.height()
 
