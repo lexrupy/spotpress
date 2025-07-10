@@ -1,4 +1,4 @@
-import time
+from datetime import datetime
 from spotpress.qtcompat import (
     QApplication,
     QWidget,
@@ -40,7 +40,9 @@ class LogTab(QWidget):
         self.setLayout(layout)
 
     def append_log_message(self, message: str):
-        self.log_text.append(f"{time.time():.3f} - {message}")
+        timestamp = datetime.now().strftime("%H:%M:%S.%f")[:-3]
+        # timestamp = f"{time.time():.3f}"
+        self.log_text.append(f"{timestamp} - {message}")
 
     def on_clear_log_clicked(self):
         self.log_text.clear()

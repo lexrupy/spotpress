@@ -109,7 +109,8 @@ class ASASmartControlPointer(PointerDevice):
         # Agendar clique simples após DOUBLE_CLICK_INTERVAL
         def delayed_click():
             self.executa_acao(botao)
-            del self._pending_click_timers[botao]
+            if botao in self._pending_click_timers:
+                del self._pending_click_timers[botao]
 
         t = threading.Timer(self.DOUBLE_CLICK_INTERVAL, delayed_click)
         self._pending_click_timers[botao] = t

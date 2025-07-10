@@ -126,7 +126,7 @@ try:
 
     SP_QT_VERSION = 6
 except ImportError:
-    from PyQt5.QtCore import (
+    from PyQt5.QtCore import (  # pyright: ignore
         Qt,
         QEvent,
         QObject,
@@ -138,7 +138,7 @@ except ImportError:
         QRect,
         QRectF,
     )
-    from PyQt5.QtWidgets import (
+    from PyQt5.QtWidgets import (  # pyright: ignore
         QApplication,
         QMenu,
         QAction,
@@ -165,7 +165,7 @@ except ImportError:
         QCheckBox,
         QGridLayout,
     )
-    from PyQt5.QtGui import (
+    from PyQt5.QtGui import (  # pyright: ignore
         QGuiApplication,
         QIcon,
         QPixmap,
