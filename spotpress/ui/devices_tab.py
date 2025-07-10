@@ -1,5 +1,6 @@
-from PyQt6.QtWidgets import QWidget, QVBoxLayout
-from PyQt6.QtWidgets import (
+from spotpress.qtcompat import (
+    QWidget,
+    QVBoxLayout,
     QWidget,
     QLabel,
     QPushButton,
@@ -9,9 +10,10 @@ from PyQt6.QtWidgets import (
     QListWidget,
     QGroupBox,
     QTextEdit,
+    QtItem_UserRole,
+    pyqtSignal,
+    QTimer,
 )
-
-from PyQt6.QtCore import pyqtSignal, Qt, QTimer
 
 
 class DevicesTab(QWidget):
@@ -78,7 +80,7 @@ class DevicesTab(QWidget):
 
     def on_device_selected(self, current, previous):
         if current:
-            dev = current.data(Qt.ItemDataRole.UserRole)
+            dev = current.data(QtItem_UserRole)
             QTimer.singleShot(50, lambda: self.change_device(dev))
             # self._ctx.main_window.preferences_tab.update_modes_list_from_context()
         else:

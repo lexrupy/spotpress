@@ -1,23 +1,28 @@
 import sys
 import os
 import configparser
-from PyQt6.QtWidgets import (
+from spotpress.qtcompat import (
+    SP_QT_VERSION,
     QApplication,
     QListWidgetItem,
     QMenu,
     QMessageBox,
     QSystemTrayIcon,
+    QSystemTrayIcon_Trigger,
     QWidget,
     QPushButton,
     QTabWidget,
     QVBoxLayout,
     QHBoxLayout,
     QMainWindow,
+    QIcon,
+    QAction,
+    Qt_WindowMinimizeButtonHint,
+    QtItem_UserRole,
+    pyqtSignal,
+    QTimer,
 )
 
-from PyQt6.QtGui import QIcon, QPixmap, QAction
-
-from PyQt6.QtCore import QPoint, QPointF, Qt, pyqtSignal, QTimer
 from spotpress.appcontext import AppContext
 from spotpress.spotlight import SpotlightOverlayWindow
 from spotpress.infoverlay import InfOverlayWindow
@@ -41,11 +46,12 @@ else:
 
 
 # Redireciona mensagens do Qt para /dev/null
-# if not WINDOWS_OS:
-#     import ctypes
-#     ctypes.CDLL(None).freopen(
-#         b"/dev/null", b"w", ctypes.c_void_p.in_dll(ctypes.CDLL(None), "stderr")
-#     )
+if not WINDOWS_OS and SP_QT_VERSION == 5:
+    import ctypes
+
+    ctypes.CDLL(None).freopen(
+        b"/dev/null", b"w", ctypes.c_void_p.in_dll(ctypes.CDLL(None), "stderr")
+    )
 
 
 class SpotpressPreferences(QMainWindow):
@@ -59,11 +65,7 @@ class SpotpressPreferences(QMainWindow):
         self.setGeometry(100, 100, 650, 550)
 
         # Quando fechar a janela, ao invés de fechar, esconder
-        self.setWindowFlags(
-            # self.windowFlags() | Qt.WindowMinimizeButtonHint  # pyright: ignore
-            self.windowFlags()
-            | Qt.WindowType.WindowMinimizeButtonHint
-        )
+        self.setWindowFlags(self.windowFlags() | Qt_WindowMinimizeButtonHint)
         if WINDOWS_OS:
             self.setMinimumSize(650, 760)
         else:
@@ -150,7 +152,7 @@ class SpotpressPreferences(QMainWindow):
         # self.move(qt_rectangle.topLeft())
 
     def on_tray_icon_activated(self, reason):
-        if reason == QSystemTrayIcon.ActivationReason.Trigger:
+        if reason == QSystemTrayIcon_Trigger:
 
             if self.isVisible():
                 self.hide()
@@ -169,7 +171,7 @@ class SpotpressPreferences(QMainWindow):
         self.devices_tab.devices_list.setEnabled(True)
         for dev in devices:
             item = QListWidgetItem(dev.display_name())
-            item.setData(Qt.ItemDataRole.UserRole, dev)
+            item.setData(QtItem_UserRole, dev)
             self.devices_tab.devices_list.addItem(item)
 
         self.preferences_tab.update_modes_list_from_context()

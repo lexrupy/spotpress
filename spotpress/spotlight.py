@@ -1,6 +1,7 @@
 import time
-from PyQt6.QtWidgets import QApplication, QWidget
-from PyQt6.QtGui import (
+from spotpress.qtcompat import (
+    QApplication,
+    QWidget,
     QPainter,
     QColor,
     QPixmap,
@@ -9,8 +10,27 @@ from PyQt6.QtGui import (
     QPen,
     QBrush,
     QGuiApplication,
+    Qt,
+    QRect,
+    QTimer,
+    QPointF,
+    QRectF,
+    QPoint,
+    QEvent,
+    Qt_BlankCursor,
+    Qt_Color_Transparent,
+    Qt_Event_KeyPress,
+    Qt_Key_Escape,
+    Qt_Key_M,
+    Qt_Key_P,
+    Qt_WidgetAttribute_WA_ShowWithoutActivating,
+    Qt_WidgetAttribute_WA_TranslucentBackground,
+    Qt_WidgetAttribute_WA_TransparentForMouseEvents,
+    Qt_WindowType_FramelessWindowHint,
+    Qt_WindowType_Tool,
+    Qt_WindowType_WindowStaysOnTopHint,
+    Qt_WindowType_X11BypassWindowManagerHint,
 )
-from PyQt6.QtCore import Qt, QRect, QTimer, QPointF, QRectF, QPoint, QEvent
 
 from .utils import (
     LASER_COLORS,
@@ -39,15 +59,15 @@ class SpotlightOverlayWindow(QWidget):
             QApplication.instance().installEventFilter(self)
 
         self.setWindowFlags(
-            Qt.WindowType.FramelessWindowHint
-            | Qt.WindowType.WindowStaysOnTopHint
-            | Qt.WindowType.X11BypassWindowManagerHint
-            | Qt.WindowType.Tool
+            Qt_WindowType_FramelessWindowHint
+            | Qt_WindowType_WindowStaysOnTopHint
+            | Qt_WindowType_X11BypassWindowManagerHint
+            | Qt_WindowType_Tool
         )
-        self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
-        self.setAttribute(Qt.WidgetAttribute.WA_ShowWithoutActivating)
-        self.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
-        self.setCursor(Qt.CursorShape.BlankCursor)
+        self.setAttribute(Qt_WidgetAttribute_WA_TranslucentBackground)
+        self.setAttribute(Qt_WidgetAttribute_WA_ShowWithoutActivating)
+        self.setAttribute(Qt_WidgetAttribute_WA_TransparentForMouseEvents)
+        self.setCursor(Qt_BlankCursor)
 
         self.overlay_hidden = False
 
@@ -98,7 +118,7 @@ class SpotlightOverlayWindow(QWidget):
         return 0  # fallback
 
     def eventFilter(self, a0, a1):
-        if a1.type() == QEvent.Type.KeyPress:
+        if a1.type() == Qt_Event_KeyPress:
 
             self.do_keypress(a1)
             return True  # impede propagação se quiser
@@ -112,14 +132,14 @@ class SpotlightOverlayWindow(QWidget):
 
             if (
                 now - self.last_key_time < 1.0
-                and self.last_key_pressed == Qt.Key.Key_Escape
+                and self.last_key_pressed == Qt_Key_Escape
             ):
                 self.quit()
-        elif key == Qt.Key.Key_P:
+        elif key == Qt_Key_P:
 
             self.capture_screenshot()
             self.update()
-        elif key == Qt.Key.Key_M:
+        elif key == Qt_Key_M:
 
             self.switch_mode(step=1)
             self.update()
@@ -131,7 +151,7 @@ class SpotlightOverlayWindow(QWidget):
         if self._always_take_screenshot:
             return
         self.pixmap = QPixmap(self.size())
-        self.pixmap.fill(Qt.GlobalColor.transparent)
+        self.pixmap.fill(Qt_Color_Transparent)
 
     def change_overlay_color(self, dir=1):
         new_index = self._ctx.config["shade_color_index"] + dir
@@ -378,7 +398,7 @@ class SpotlightOverlayWindow(QWidget):
         padded_pixmap = QPixmap(
             self.pixmap.width() + PADDING * 2, self.pixmap.height() + PADDING * 2
         )
-        padded_pixmap.fill(Qt.GlobalColor.transparent)
+        padded_pixmap.fill(Qt_Color_Transparent)
         painter_pad = QPainter(padded_pixmap)
         painter_pad.drawPixmap(PADDING, PADDING, self.pixmap)
         painter_pad.end()

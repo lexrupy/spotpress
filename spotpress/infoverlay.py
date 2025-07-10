@@ -1,12 +1,25 @@
 # infooverlay.py
-
-from PyQt6.QtWidgets import QWidget, QLabel
-from PyQt6.QtGui import QFont, QColor, QPen
-from PyQt6.QtCore import Qt
-
-from PyQt6.QtWidgets import QWidget, QLabel
-from PyQt6.QtGui import QFont, QColor, QPainter, QFontMetrics
-from PyQt6.QtCore import Qt, QRect, QPoint
+from spotpress.qtcompat import (
+    QPainter_Antialiasing,
+    QPen,
+    QWidget,
+    QLabel,
+    QFont,
+    QColor,
+    QPainter,
+    QFontMetrics,
+    QRect,
+    QPoint,
+    Qt_AlignCenter,
+    Qt_FontWeight_Bold,
+    Qt_NoPen,
+    Qt_WidgetAttribute_WA_ShowWithoutActivating,
+    Qt_WidgetAttribute_WA_TranslucentBackground,
+    Qt_WindowType_FramelessWindowHint,
+    Qt_WindowType_Tool,
+    Qt_WindowType_WindowStaysOnTopHint,
+    Qt_WindowType_X11BypassWindowManagerHint,
+)
 
 
 class InfOverlayWindow(QWidget):
@@ -15,18 +28,18 @@ class InfOverlayWindow(QWidget):
         self.screen_geometry = screen_geometry
 
         self.setWindowFlags(
-            Qt.WindowType.FramelessWindowHint
-            | Qt.WindowType.WindowStaysOnTopHint
-            | Qt.WindowType.X11BypassWindowManagerHint
-            | Qt.WindowType.Tool
+            Qt_WindowType_FramelessWindowHint
+            | Qt_WindowType_WindowStaysOnTopHint
+            | Qt_WindowType_X11BypassWindowManagerHint
+            | Qt_WindowType_Tool
         )
-        self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
-        self.setAttribute(Qt.WidgetAttribute.WA_ShowWithoutActivating)
+        self.setAttribute(Qt_WidgetAttribute_WA_TranslucentBackground)
+        self.setAttribute(Qt_WidgetAttribute_WA_ShowWithoutActivating)
 
         self.label = QLabel(self)
-        self.label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.label.setAlignment(Qt_AlignCenter)
         self.label.setStyleSheet("color: white;")
-        self.font = QFont("Arial", 44, QFont.Weight.Bold)
+        self.font = QFont("Arial", 44, Qt_FontWeight_Bold)
         self.label.setFont(self.font)
 
     def show_message(self, text):
@@ -58,7 +71,7 @@ class InfOverlayWindow(QWidget):
     def paintEvent(self, event):
         # Desenha fundo preto translúcido
         painter = QPainter(self)
-        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+        painter.setRenderHint(QPainter_Antialiasing)
         painter.setBrush(QColor(0, 0, 0, 180))  # preto translúcido
-        painter.setPen(QPen(Qt.PenStyle.NoPen))
+        painter.setPen(QPen(Qt_NoPen))
         painter.drawRoundedRect(self.rect(), 20, 20)

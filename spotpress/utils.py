@@ -1,6 +1,5 @@
 # import mss
-from PyQt6.QtGui import QColor, QImage, QGuiApplication
-from PyQt6.QtCore import QRect
+from spotpress.qtcompat import QColor, QImage, QGuiApplication, QRect
 
 
 MODE_MOUSE = 0

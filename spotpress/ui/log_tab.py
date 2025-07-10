@@ -1,5 +1,5 @@
 import time
-from PyQt6.QtWidgets import (
+from spotpress.qtcompat import (
     QApplication,
     QWidget,
     QPushButton,

@@ -1,6 +1,5 @@
 import configparser
-from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import (
+from spotpress.qtcompat import (
     QAbstractItemView,
     QMessageBox,
     QSizePolicy,
@@ -16,8 +15,17 @@ from PyQt6.QtWidgets import (
     QGridLayout,
     QListWidget,
     QGroupBox,
+    QIcon,
+    QPixmap,
+    QColor,
+    Qt_CheckState_Checked,
+    Qt_CheckState_Unchecked,
+    Qt_DropAction_MoveAction,
+    Qt_ItemFlag_ItemIsEnabled,
+    Qt_ItemFlag_ItemIsSelectable,
+    Qt_ItemFlag_ItemIsUserCheckable,
+    Qt_ItemFlag_NoItemFlags,
 )
-from PyQt6.QtGui import QIcon, QPixmap, QColor
 from spotpress.utils import (
     DEFAULT_MODES,
     LASER_COLORS,
@@ -278,7 +286,7 @@ class PreferencesTab(QWidget):
             QAbstractItemView.SelectionMode.SingleSelection
         )
         self.modes_list.setDragDropMode(QAbstractItemView.DragDropMode.InternalMove)
-        self.modes_list.setDefaultDropAction(Qt.DropAction.MoveAction)
+        self.modes_list.setDefaultDropAction(Qt_DropAction_MoveAction)
         self.modes_list.currentRowChanged.connect(self.on_mode_selected)
 
         if self.modes_list.count() == 0:
@@ -286,12 +294,12 @@ class PreferencesTab(QWidget):
                 item = QListWidgetItem(name)
                 item.setFlags(
                     item.flags()
-                    | Qt.ItemFlag.ItemIsUserCheckable
-                    | Qt.ItemFlag.ItemIsEnabled
-                    | Qt.ItemFlag.ItemIsSelectable
+                    | Qt_ItemFlag_ItemIsUserCheckable
+                    | Qt_ItemFlag_ItemIsEnabled
+                    | Qt_ItemFlag_ItemIsSelectable
                 )
                 item.setCheckState(
-                    Qt.CheckState.Checked if enabled else Qt.CheckState.Unchecked
+                    Qt_CheckState_Checked if enabled else Qt_CheckState_Unchecked
                 )
                 self.modes_list.addItem(item)
 
@@ -379,15 +387,15 @@ class PreferencesTab(QWidget):
             if mode_id in self._ctx.compatible_modes:
                 # Modo compatível
                 item.setFlags(
-                    Qt.ItemFlag.ItemIsUserCheckable
-                    | Qt.ItemFlag.ItemIsEnabled
-                    | Qt.ItemFlag.ItemIsSelectable
+                    Qt_ItemFlag_ItemIsUserCheckable
+                    | Qt_ItemFlag_ItemIsEnabled
+                    | Qt_ItemFlag_ItemIsSelectable
                 )
-                item.setCheckState(Qt.CheckState.Checked)
+                item.setCheckState(Qt_CheckState_Checked)
             else:
                 # Modo não compatível
                 item.setFlags(
-                    Qt.ItemFlag.NoItemFlags
+                    Qt_ItemFlag_NoItemFlags
                 )  # total desativado (inclusive check)
             self.modes_list.addItem(item)
 
@@ -636,7 +644,7 @@ class PreferencesTab(QWidget):
             name = item.text()
             mode_id = MODE_NAME_TO_ID.get(name)
             if mode_id is not None:
-                enabled = item.checkState() == Qt.CheckState.Checked
+                enabled = item.checkState() == Qt_CheckState_Checked
                 config["Modes"][f"mode{i}"] = f"{mode_id}|{int(enabled)}"
 
         selected_items = self.modes_list.selectedItems()

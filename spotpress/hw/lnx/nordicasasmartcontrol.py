@@ -26,7 +26,7 @@ class ASASmartControlPointer(PointerDevice):
             MODE_MOUSE,
             MODE_SPOTLIGHT,
             MODE_LASER,
-            # MODE_PEN,
+            MODE_PEN,
             MODE_MAG_GLASS,
         ]
 
