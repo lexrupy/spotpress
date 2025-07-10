@@ -61,6 +61,8 @@ class PreferencesTab(QWidget):
         super().__init__(parent)
         self._ctx = ctx
         self.init_ui()
+        # from spotpress.utils import set_debug_border
+        # set_debug_border(self)
 
     def init_ui(self):
         main_layout = QVBoxLayout()
@@ -94,6 +96,22 @@ class PreferencesTab(QWidget):
         self.spotlight_border = QCheckBox("Border")
         self.spotlight_border.stateChanged.connect(self.on_spotlight_border_changed)
 
+        self.spotlight_blur_radio = QRadioButton("Blur")
+        self.spotlight_shade_radio = QRadioButton("Shade")
+
+        self.spotlight_radio_group = QButtonGroup()
+        self.spotlight_radio_group.addButton(self.spotlight_blur_radio, 0)
+        self.spotlight_radio_group.addButton(self.spotlight_shade_radio, 1)
+
+        self.spotlight_radio_group.buttonClicked.connect(
+            self.on_spotlight_background_changed
+        )
+
+        spot_radio_layout = QHBoxLayout()
+        spot_radio_layout.addWidget(QLabel("Background:"))
+        spot_radio_layout.addWidget(self.spotlight_blur_radio)
+        spot_radio_layout.addWidget(self.spotlight_shade_radio)
+
         spotlight_group = make_group("Spotlight")
         spotlight_layout = QGridLayout()
         spotlight_layout.addWidget(QLabel("Shape:"), 0, 0)
@@ -102,6 +120,7 @@ class PreferencesTab(QWidget):
         spotlight_layout.addWidget(self.spotlight_size, 1, 1)
         spotlight_layout.addWidget(QLabel("% of screen height"), 1, 2)
         spotlight_layout.addWidget(self.spotlight_border, 2, 0)
+        spotlight_layout.addLayout(spot_radio_layout, 2, 1)
         spotlight_group.setLayout(spotlight_layout)
         left_layout.addWidget(spotlight_group)
 
@@ -352,10 +371,13 @@ class PreferencesTab(QWidget):
             cfg["spotlight_shape"] = self.spotlight_shape.currentText()
             cfg["spotlight_size"] = self.spotlight_size.value()
             cfg["spotlight_border"] = self.spotlight_border.isChecked()
+            cfg["spotlight_background_mode"] = int(
+                self.spotlight_radio_group.checkedId()
+            )
             cfg["magnify_shape"] = self.magnify_shape.currentText()
             cfg["magnify_size"] = self.magnify_size.value()
             cfg["magnify_border"] = self.magnify_border.isChecked()
-            cfg["magnify_background_mode"] = str(self.magnify_radio_group.checkedId())
+            cfg["magnify_background_mode"] = int(self.magnify_radio_group.checkedId())
             cfg["magnify_zoom"] = self.magnify_zoom.value()
             cfg["laser_dot_size"] = self.laser_dot_size.value()
             cfg["laser_color_index"] = self.laser_color.currentIndex()
@@ -432,6 +454,9 @@ class PreferencesTab(QWidget):
         self.update_context_config()
 
     def on_spotlight_size_changed(self):
+        self.update_context_config()
+
+    def on_spotlight_background_changed(self):
         self.update_context_config()
 
     def on_magnify_background_changed(self):
@@ -549,6 +574,14 @@ class PreferencesTab(QWidget):
         self.spotlight_size.setValue(getint("Spotlight", "size", 35))
         self.spotlight_border.setChecked(getbool("Spotlight", "border", True))
 
+        spt_btn = self.spotlight_radio_group.button(
+            getint("Spotlight", "background_mode", 1)
+        )
+        if spt_btn is not None:
+            spt_btn.setChecked(True)
+        else:
+            self.spotlight_shade_radio.setChecked(True)  # fallback
+
         self.magnify_shape.setCurrentIndex(
             getindex_by_text(
                 self.magnify_shape,
@@ -631,6 +664,7 @@ class PreferencesTab(QWidget):
             "shape": self.spotlight_shape.currentText(),
             "size": str(self.spotlight_size.value()),
             "border": str(self.spotlight_border.isChecked()),
+            "background_mode": str(self.spotlight_radio_group.checkedId()),
         }
         config["Magnify"] = {
             "shape": self.magnify_shape.currentText(),

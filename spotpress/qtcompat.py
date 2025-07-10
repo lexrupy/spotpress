@@ -37,13 +37,13 @@ try:
         QLabel,
         QFontDialog,
         QAbstractItemView,
-        QSizePolicy,
         QSpinBox,
         QCheckBox,
         QGridLayout,
         QGraphicsScene,
         QGraphicsPixmapItem,
         QGraphicsBlurEffect,
+        QSizePolicy,
     )
     from PyQt6.QtGui import (
         QIcon,
@@ -65,6 +65,12 @@ try:
 
     Qt_ConnectionType_QueuedConnection = Qt.ConnectionType.QueuedConnection
 
+    QPainter_CompositionMode_Clear = QPainter.CompositionMode.CompositionMode_Clear
+    QPainter_CompositionMode_Source = QPainter.CompositionMode.CompositionMode_Source
+
+    QSizePolicy_Preferred = QSizePolicy.Policy.Preferred
+    QSizePolicy_Fixed = QSizePolicy.Policy.Fixed
+
     # Enums e constantes adaptadas PyQt6
     Qt_FramelessWindowHint = Qt.WindowType.FramelessWindowHint
     Qt_WA_TranslucentBackground = Qt.WidgetAttribute.WA_TranslucentBackground
@@ -72,6 +78,7 @@ try:
     Qt_NoPen = Qt.PenStyle.NoPen
     Qt_Key_Escape = Qt.Key.Key_Escape
     Qt_AlignCenter = Qt.AlignmentFlag.AlignCenter
+    Qt_AlignLeft = Qt.AlignmentFlag.AlignLeft
     Qt_SolidLine = Qt.PenStyle.SolidLine
     Qt_RoundCap = Qt.PenCapStyle.RoundCap
     Qt_Key_Tab = Qt.Key.Key_Tab
@@ -204,6 +211,12 @@ except ImportError:
 
     Qt_ConnectionType_QueuedConnection = Qt.QueuedConnection
 
+    QPainter_CompositionMode_Clear = QPainter.CompositionMode_Clear
+    QPainter_CompositionMode_Source = QPainter.CompositionMode_SourceOver
+
+    QSizePolicy_Preferred = QSizePolicy.Preferred
+    QSizePolicy_Fixed = QSizePolicy.Fixed
+
     Qt_WindowMinimizeButtonHint = Qt.WindowMinimizeButtonHint
     Qt_WindowType_Tool = Qt.Tool
     Qt_WindowType_WindowStaysOnTopHint = Qt.WindowStaysOnTopHint
@@ -221,6 +234,7 @@ except ImportError:
     Qt_NoPen = Qt.NoPen
     Qt_Key_Escape = Qt.Key_Escape
     Qt_AlignCenter = Qt.AlignCenter
+    Qt_AlignLeft = Qt.AlignLeft
     Qt_SolidLine = Qt.SolidLine
     Qt_RoundCap = Qt.RoundCap
     Qt_Key_Tab = Qt.Key_Tab
@@ -300,6 +314,10 @@ __all__ = [
     "QAbstractItemView",
     "QFontMetrics",
     "QSizePolicy",
+    "QSizePolicy_Fixed",
+    "QSizePolicy_Preferred",
+    "QPainter_CompositionMode_Clear",
+    "QPainter_CompositionMode_Source",
     "QSpinBox",
     "QCheckBox",
     "QGraphicsScene",

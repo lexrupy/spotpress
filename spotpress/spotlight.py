@@ -2,6 +2,8 @@ import time
 from spotpress.qtcompat import (
     QApplication,
     QPainter_Antialiasing,
+    QPainter_CompositionMode_Clear,
+    QPainter_CompositionMode_Source,
     QWidget,
     QPainter,
     QColor,
@@ -25,6 +27,7 @@ from spotpress.qtcompat import (
     Qt_Key_Escape,
     Qt_Key_M,
     Qt_Key_P,
+    Qt_NoPen,
     Qt_WidgetAttribute_WA_ShowWithoutActivating,
     Qt_WidgetAttribute_WA_TranslucentBackground,
     Qt_WidgetAttribute_WA_TransparentForMouseEvents,
@@ -210,15 +213,24 @@ class SpotlightOverlayWindow(QWidget):
             or self.is_overlay_actually_visible()
         ):
             return  # Ignora chamadas repetidas enquanto estiver processando
+
         self._showing_overlay = True
         try:
             if not self.is_overlay_actually_visible():
+
                 if self._ctx.current_mode == MODE_MAG_GLASS:
                     if self._ctx.config["magnify_zoom"] <= self.zoom_min:
                         self._ctx.config["magnify_zoom"] = self.zoom_min
                     self.capture_screenshot(show_after=True, generate_blurred=True)
                 elif self._ctx.current_mode == MODE_LASER and self.laser_inverted():
                     self.capture_screenshot(show_after=True)
+                elif (
+                    self._ctx.current_mode == MODE_SPOTLIGHT
+                    and self._ctx.config["spotlight_background_mode"] == 0
+                ):
+                    self.capture_screenshot(
+                        generate_blurred=True, fill_pixmap=False, show_after=True
+                    )
                 elif self._ctx.current_mode != MODE_MOUSE:
                     if self._ctx.config.get("general_always_capture", False):
                         self.capture_screenshot(show_after=True)
@@ -282,6 +294,11 @@ class SpotlightOverlayWindow(QWidget):
         else:
             if new_mode == MODE_MAG_GLASS:
                 self.capture_screenshot()
+            if (
+                new_mode == MODE_SPOTLIGHT
+                and self._ctx.config["spotlight_background_mode"] == 0
+            ):
+                self.capture_screenshot(fill_pixmap=False, generate_blurred=True)
             if not self.auto_mode_enabled():
                 self.show_overlay()
 
@@ -368,7 +385,9 @@ class SpotlightOverlayWindow(QWidget):
             self.current_line_width = new_width
             self.update()  # atualiza a tela para refletir a mudança, se necessário
 
-    def capture_screenshot(self, show_after=False, generate_blurred=False):
+    def capture_screenshot(
+        self, show_after=False, generate_blurred=False, fill_pixmap=True
+    ):
         self._capturing_screenshot = True
         try:
             self.hide_overlay()
@@ -379,10 +398,14 @@ class SpotlightOverlayWindow(QWidget):
             # Captura a tela limpa usando seu método externo
             qimage = capture_monitor_screenshot(self._ctx.screen_index)
 
+            pixmap = QPixmap.fromImage(qimage)
+
             # Atualiza o pixmap do overlay (converter QImage para QPixmap)
-            self.pixmap = QPixmap.fromImage(qimage)
+            if fill_pixmap:
+                self.pixmap = pixmap
             if generate_blurred:
-                self.blurred_pixmap = apply_blur(self.pixmap)
+                self.blurred_pixmap = apply_blur(pixmap)
+
             self._pixmap_cleared = False
 
             # Mostra a janela overlay novamente se foi ocultada
@@ -390,8 +413,6 @@ class SpotlightOverlayWindow(QWidget):
                 self.showFullScreen()
         finally:
             self._capturing_screenshot = False
-
-        return self.pixmap, self.blurred_pixmap
 
     def drawMagnifyingGlass(self, painter, cursor_pos):
         radius = int(self._ctx.current_screen_height) * (
@@ -472,7 +493,7 @@ class SpotlightOverlayWindow(QWidget):
 
             pen = QPen(border_color, border_width)
             painter.setPen(pen)
-            painter.setBrush(Qt.BrushStyle.NoBrush)
+            painter.setBrush(Qt_BrushStyle_NoBrush)
             painter.setRenderHint(QPainter_Antialiasing)
             border_rect = dest_rect.adjusted(
                 border_width // 2,
@@ -491,17 +512,49 @@ class SpotlightOverlayWindow(QWidget):
         size = int(self._ctx.current_screen_height) * (
             self._ctx.config["spotlight_size"] / 100.0
         )
-        # Spotlight tradicional com overlay escuro
-        shade_color = SHADE_COLORS[self._ctx.config["shade_color_index"]][0]
-        shade_color.setAlpha(int(self._ctx.config["shade_opacity"] * 255 / 100))
-        painter.setBrush(shade_color)
-        painter.setPen(QPen(Qt.PenStyle.NoPen))
-        spotlight_path = QPainterPath()
-        spotlight_path.addRect(QRectF(self.rect()))
-        spotlight_path.addEllipse(QPointF(cursor_pos), size, size)
 
-        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
-        painter.drawPath(spotlight_path)
+        bg_mode = int(self._ctx.config.get("spotlight_background_mode", 1))
+
+        if bg_mode == 0 and self.blurred_pixmap:
+            # Desenha o fundo borrado
+            painter.drawPixmap(0, 0, self.blurred_pixmap)
+
+            # Desenha a camada shade (escurecida) por cima do blur
+            shade_color = SHADE_COLORS[self._ctx.config["shade_color_index"]][0]
+            # Neste caso desenha um alpha Fixo só para fazer um efeito além do blur
+            shade_color.setAlpha(100)
+            # shade_color = QColor(0, 0, 0, 50)
+            painter.fillRect(self.rect(), shade_color)
+
+            # Muda modo de composição para "furar"
+            painter.setCompositionMode(QPainter_CompositionMode_Clear)
+
+            spotlight_rect = QRectF(
+                cursor_pos.x() - size,
+                cursor_pos.y() - size,
+                size * 2,
+                size * 2,
+            )
+            painter.setRenderHint(QPainter_Antialiasing)
+            painter.setBrush(QBrush(Qt_Color_Transparent))
+            painter.setPen(QPen(Qt_NoPen))
+            painter.drawEllipse(spotlight_rect)
+
+            # Restaura modo padrão
+            painter.setCompositionMode(QPainter_CompositionMode_Source)
+
+        elif bg_mode == 1:  # Shade
+            shade_color = SHADE_COLORS[self._ctx.config["shade_color_index"]][0]
+            shade_color.setAlpha(int(self._ctx.config["shade_opacity"] * 255 / 100))
+            painter.setBrush(shade_color)
+            painter.setPen(QPen(Qt_NoPen))
+
+            spotlight_path = QPainterPath()
+            spotlight_path.addRect(QRectF(self.rect()))
+            spotlight_path.addEllipse(QPointF(cursor_pos), size, size)
+
+            painter.setRenderHint(QPainter_Antialiasing)
+            painter.drawPath(spotlight_path)
 
         if self._ctx.config.get("spotlight_border", False):
             color_index = int(self._ctx.config.get("border_color_index", 0))
@@ -596,7 +649,7 @@ class SpotlightOverlayWindow(QWidget):
                     shadow_color = QColor(color)
                     shadow_color.setAlpha(alpha)
                     painter.setBrush(shadow_color)
-                    painter.setPen(QPen(Qt.PenStyle.NoPen))
+                    painter.setPen(QPen(Qt_NoPen))
 
                     painter.drawEllipse(
                         int(center_x - margin),
@@ -606,12 +659,12 @@ class SpotlightOverlayWindow(QWidget):
                     )
 
             painter.setBrush(color)
-            painter.setPen(QPen(Qt.PenStyle.NoPen))
+            painter.setPen(QPen(Qt_NoPen))
 
             painter.drawEllipse(center_x, center_y, int(size), int(size))
 
     def drawLines(self, painter, cursor_pos):
-        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+        painter.setRenderHint(QPainter_Antialiasing)
 
         # Desenha paths antigos
         for path in self.pen_paths:

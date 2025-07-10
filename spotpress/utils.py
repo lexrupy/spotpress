@@ -105,6 +105,17 @@ def get_screen_and_geometry(screen_index):
     )
 
 
+def set_debug_border(widget):
+    widget.setStyleSheet("border: 1px solid blue;")
+    if hasattr(widget, "layout") and widget.layout():
+        layout = widget.layout()
+        for i in range(layout.count()):
+            item = layout.itemAt(i)
+            child = item.widget()
+            if child:
+                set_debug_border(child)
+
+
 def apply_blur(pixmap: QPixmap, radius: float = 5.0) -> QPixmap:
 
     # Configura cena gráfica
