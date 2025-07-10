@@ -322,7 +322,7 @@ class SpotlightOverlayWindow(QWidget):
             self._ctx.config["laser_color_index"] + step
         ) % len(LASER_COLORS)
         if self.laser_inverted():
-            self.capture_screenshot()
+            self.capture_screenshot(show_after=True)
         else:
             self.clear_pixmap()
         self.update()

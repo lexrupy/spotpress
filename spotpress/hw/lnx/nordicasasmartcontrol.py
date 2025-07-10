@@ -276,12 +276,16 @@ class ASASmartControlPointer(PointerDevice):
                         ow.zoom(-1)
                     elif current_mode == MODE_LASER:
                         ow.next_laser_color()
+                    elif current_mode == MODE_SPOTLIGHT:
+                        ow.change_overlay_color(-1)
             case "G_RIGHT":
                 if ow.is_overlay_actually_visible():
                     if current_mode == MODE_MAG_GLASS:
                         ow.zoom(+1)
                     elif current_mode == MODE_LASER:
                         ow.next_laser_color(-1)
+                    elif current_mode == MODE_SPOTLIGHT:
+                        ow.change_overlay_color(-1)
             case "HGL+hold":
                 if ow.is_overlay_actually_visible():
                     pass
