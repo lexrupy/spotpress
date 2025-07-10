@@ -100,8 +100,12 @@ class SpotpressPreferences(QMainWindow):
         self.quit_button.clicked.connect(self.on_quit_clicked)
         self.close_button = QPushButton("Close")
         self.close_button.clicked.connect(self.on_close_clicked)
+
+        self.about_button = QPushButton("About Spotpress...")
+        self.about_button.clicked.connect(self.show_about)
         bottom_layout.addWidget(self.quit_button)
         bottom_layout.addStretch()
+        bottom_layout.addWidget(self.about_button)
         bottom_layout.addWidget(self.close_button)
 
         main_layout.addLayout(bottom_layout)
