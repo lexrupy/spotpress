@@ -21,6 +21,7 @@ from spotpress.qtcompat import (
     QtItem_UserRole,
     pyqtSignal,
     QTimer,
+    QPixmap,
 )
 
 from spotpress.appcontext import AppContext
@@ -230,6 +231,7 @@ class SpotpressPreferences(QMainWindow):
         msg.setWindowTitle("About SpotPress...")
         msg.setText(
             "SpotPress: A Spotlight Aplication For Presentations.\n"
+            f"Powered By PyQT{SP_QT_VERSION}\n"
             "Licenced under LGPL\nContributors:\nAlexandre da Silva <lexrupy>"
         )
 

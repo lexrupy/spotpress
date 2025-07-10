@@ -576,12 +576,12 @@ class PreferencesTab(QWidget):
                 item = QListWidgetItem(name)
                 item.setFlags(
                     item.flags()
-                    | Qt.ItemFlag.ItemIsUserCheckable
-                    | Qt.ItemFlag.ItemIsEnabled
-                    | Qt.ItemFlag.ItemIsSelectable
+                    | Qt_ItemFlag_ItemIsUserCheckable
+                    | Qt_ItemFlag_ItemIsEnabled
+                    | Qt_ItemFlag_ItemIsSelectable
                 )
                 item.setCheckState(
-                    Qt.CheckState.Checked if enabled else Qt.CheckState.Unchecked
+                    Qt_CheckState_Checked if enabled else Qt_CheckState_Unchecked
                 )
                 self.modes_list.addItem(item)
             except Exception as e:
