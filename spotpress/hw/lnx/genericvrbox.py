@@ -9,10 +9,10 @@ from spotpress.utils import (
     MODE_MOUSE,
     MODE_SPOTLIGHT,
 )
-from spotpress.hw.lnx.pointerdevice import BasePointerDevice
+from spotpress.hw.lnx.pointerdevice import PointerDevice
 
 
-class GenericVRBoxPointer(BasePointerDevice):
+class GenericVRBoxPointer(PointerDevice):
     VENDOR_ID = 0x248A
     PRODUCT_ID = 0x8266
     PRODUCT_DESCRIPTION = "Generic VR BOX Bluetooth Controller"

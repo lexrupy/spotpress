@@ -1,5 +1,5 @@
-from PyQt5.QtWidgets import QWidget, QVBoxLayout
-from PyQt5.QtWidgets import (
+from PyQt6.QtWidgets import QWidget, QVBoxLayout
+from PyQt6.QtWidgets import (
     QWidget,
     QLabel,
     QPushButton,
@@ -11,7 +11,7 @@ from PyQt5.QtWidgets import (
     QTextEdit,
 )
 
-from PyQt5.QtCore import pyqtSignal, Qt, QTimer
+from PyQt6.QtCore import pyqtSignal, Qt, QTimer
 
 
 class DevicesTab(QWidget):
@@ -67,7 +67,7 @@ class DevicesTab(QWidget):
     def on_refresh_clicked(self):
         self.refresh_screens()
 
-    def on_screen_changed(self):
+    def on_screen_changed(self, current, previous):
         idx = self.screen_list.currentRow()
         if idx >= 0:
             self.screen_changed.emit(idx)
@@ -78,7 +78,7 @@ class DevicesTab(QWidget):
 
     def on_device_selected(self, current, previous):
         if current:
-            dev = current.data(Qt.UserRole)
+            dev = current.data(Qt.ItemDataRole.UserRole)
             QTimer.singleShot(50, lambda: self.change_device(dev))
             # self._ctx.main_window.preferences_tab.update_modes_list_from_context()
         else:

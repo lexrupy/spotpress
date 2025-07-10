@@ -1,5 +1,5 @@
 import time
-from PyQt5.QtWidgets import (
+from PyQt6.QtWidgets import (
     QApplication,
     QWidget,
     QPushButton,
@@ -29,7 +29,7 @@ class LogTab(QWidget):
         save_btn.setToolTip("Salvar o log em um arquivo")
         clear_btn.setToolTip("Limpar o conteúdo do log")
         copy_btn.setToolTip("Copiar log para a área de transferência")
-        button_layout.insertWidget(1, copy_btn)
+        button_layout.addWidget(copy_btn)
         button_layout.addWidget(save_btn)
         button_layout.addStretch()
         button_layout.addWidget(clear_btn)

@@ -6,10 +6,10 @@ from spotpress.utils import (
     MODE_PEN,
 )
 
-from spotpress.hw.lnx.pointerdevice import BasePointerDevice
+from spotpress.hw.lnx.pointerdevice import PointerDevice
 
 
-class VirtualPointer(BasePointerDevice):
+class VirtualPointer(PointerDevice):
     VENDOR_ID = 0x0000
     PRODUCT_ID = 0x0000
     PRODUCT_DESCRIPTION = "Virtual Pointer Device"

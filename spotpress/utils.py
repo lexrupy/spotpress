@@ -1,6 +1,6 @@
 # import mss
-from PyQt5.QtGui import QColor, QImage, QGuiApplication
-from PyQt5.QtCore import QRect
+from PyQt6.QtGui import QColor, QImage, QGuiApplication
+from PyQt6.QtCore import QRect
 
 
 MODE_MOUSE = 0
@@ -74,7 +74,9 @@ class ObservableDict(dict):
 def pil_to_qimage(pil_img):
     pil_img = pil_img.convert("RGBA")
     data = pil_img.tobytes("raw", "RGBA")
-    return QImage(data, pil_img.width, pil_img.height, QImage.Format_RGBA8888)
+    return QImage(
+        data, pil_img.width, pil_img.height, QImage.Format_RGBA8888  # pyright: ignore
+    )
 
 
 def get_screen_and_geometry(screen_index):

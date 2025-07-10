@@ -1,19 +1,10 @@
 import threading
 from pywinusb import hid
 
-
-class SingletonMeta(type):
-    _instances = {}
-
-    def __call__(cls, *args, **kwargs):
-        instance = cls._instances.get(cls)
-        if instance is None:
-            instance = super().__call__(*args, **kwargs)
-            cls._instances[cls] = instance
-        return instance
+from spotpress.hw.base_pointer_device import BasePointerDevice
 
 
-class BasePointerDevice(metaclass=SingletonMeta):
+class PointerDevice(BasePointerDevice):
     VENDOR_ID = None
     PRODUCT_ID = None
     PRODUCT_DESCRIPTION = None

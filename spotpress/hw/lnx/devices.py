@@ -5,6 +5,7 @@ import glob
 import threading
 import uinput
 
+from spotpress.hw.base_device_monitor import BaseDeviceMonitor
 from spotpress.hw.lnx.genericvrbox import GenericVRBoxPointer
 from spotpress.hw.lnx.baseusorangedotai import BaseusOrangeDotAI
 from spotpress.hw.lnx.nordicasasmartcontrol import ASASmartControlPointer
@@ -15,10 +16,12 @@ from spotpress.hw.lnx.virtualdevice import VirtualPointer
 DEVICE_CLASSES = {BaseusOrangeDotAI, GenericVRBoxPointer, ASASmartControlPointer}
 
 
-class DeviceMonitor:
+class DeviceMonitor(BaseDeviceMonitor):
     def __init__(self, context):
         self._ctx = context
         self._ctx.device_monitor = self
+        self._stop_event = threading.Event()
+        self._hotplug_thread = None
         self._switch_lock = threading.Lock()
         self._switch_thread = None
         self._monitored_devices = {}
@@ -70,10 +73,14 @@ class DeviceMonitor:
         def switch_device():
             with self._switch_lock:
                 if old_device:
-                    self._ctx.log(f"* Desativando: {old_device.__class__.__name__}")
+                    self._ctx.log(
+                        f"* Desativando: {old_device.__class__.__name__} ({old_device._known_paths})"
+                    )
                     old_device.stop()
                 if device:
-                    self._ctx.log(f"* Ativando: {device.__class__.__name__}")
+                    self._ctx.log(
+                        f"* Ativando: {device.__class__.__name__} ({device._known_paths})"
+                    )
                     device.ensure_monitoring()
                     self._ctx.set_active_device(device)
                     self._ctx.compatible_modes = sorted(
@@ -109,7 +116,9 @@ class DeviceMonitor:
         for dev in self.get_monitored_devices():
             if path in dev._known_paths:
                 self._ctx.log(f"- Removendo path {path} do dispositivo {dev}")
-                dev._known_paths.remove(path)
+                # dev._known_paths.remove(path)
+                dev._known_paths.discard(path)
+                self._ctx.log(f"- Path {path} removido de {dev.__class__.__name__}")
                 if not dev._known_paths:
                     self._ctx.log(
                         f"* Nenhum dispositivo restante para monitorar. Encerrando thread."
@@ -149,7 +158,14 @@ class DeviceMonitor:
 
         if action == "add":
             if path.startswith("/dev/hidraw") or path.startswith("/dev/input"):
-                time.sleep(0.8)
+                for _ in range(10):  # tenta por até 1s
+                    if os.path.exists(path):
+                        break
+                    time.sleep(0.1)
+                else:
+                    self._ctx.log(f"! Dispositivo {path} não apareceu após o plug.")
+                    return  # não apareceu
+                # time.sleep(0.8)
                 for dev in self.get_monitored_devices():
                     if dev.known_path(path):
                         return  # já monitorado
@@ -171,12 +187,42 @@ class DeviceMonitor:
         def monitor_loop():
             context = pyudev.Context()
             monitor = pyudev.Monitor.from_netlink(context)
-            monitor.filter_by("input")
-            monitor.filter_by("hidraw")
             monitor.start()
 
-            for device in iter(monitor.poll, None):
-                action = device.action  # 'add' ou 'remove'
+            while not self._stop_event.is_set():
+                device = monitor.poll(timeout=1.0)
+                if device is None:
+                    continue
+                if device.subsystem not in ("hidraw", "input"):
+                    continue
+                action = device.action
                 self.hotplug_callback(action, device)
 
-        threading.Thread(target=monitor_loop, daemon=True).start()
+        self._hotplug_thread = threading.Thread(target=monitor_loop, daemon=True)
+        self._hotplug_thread.start()
+
+    # def monitor_usb_hotplug(self):
+    #     def monitor_loop():
+    #         context = pyudev.Context()
+    #         monitor = pyudev.Monitor.from_netlink(context)
+    #         monitor.filter_by("input")
+    #         monitor.filter_by("hidraw")
+    #         monitor.start()
+    #
+    #         for device in iter(monitor.poll, None):
+    #             action = device.action  # 'add' ou 'remove'
+    #             self.hotplug_callback(action, device)
+    #
+    #     threading.Thread(target=monitor_loop, daemon=True).start()
+    def stop_monitoring(self):
+        self._ctx.log("* Encerrando monitoramento de dispositivos.")
+        self._stop_event.set()
+
+        for dev in self.get_monitored_devices():
+            self._ctx.log(f"- Finalizando {dev.__class__.__name__}")
+            dev.stop()
+        self._monitored_devices.clear()
+
+        if self._hotplug_thread and self._hotplug_thread.is_alive():
+            self._hotplug_thread.join(timeout=2.0)
+            self._ctx.log("* Thread de hotplug finalizada.")

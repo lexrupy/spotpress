@@ -1,8 +1,7 @@
 import sys
 import os
 import configparser
-from PyQt5.QtWidgets import (
-    QAction,
+from PyQt6.QtWidgets import (
     QApplication,
     QListWidgetItem,
     QMenu,
@@ -14,10 +13,11 @@ from PyQt5.QtWidgets import (
     QVBoxLayout,
     QHBoxLayout,
     QMainWindow,
-    QDesktopWidget,
 )
-from PyQt5.QtGui import QIcon, QPixmap
-from PyQt5.QtCore import Qt, pyqtSignal, QTimer
+
+from PyQt6.QtGui import QIcon, QPixmap, QAction
+
+from PyQt6.QtCore import QPoint, QPointF, Qt, pyqtSignal, QTimer
 from spotpress.appcontext import AppContext
 from spotpress.spotlight import SpotlightOverlayWindow
 from spotpress.infoverlay import InfOverlayWindow
@@ -29,14 +29,6 @@ from spotpress.ui.devices_tab import DevicesTab
 from spotpress.ui.log_tab import LogTab
 
 
-import warnings
-
-warnings.filterwarnings(
-    "ignore",
-    message="QObject::connect: Cannot queue arguments of type 'QItemSelection'",
-)
-
-
 CONFIG_PATH = os.path.expanduser("~/.config/spotpress/config.ini")
 
 WINDOWS_OS = False
@@ -46,6 +38,14 @@ if sys.platform.startswith("win"):
     from spotpress.hw.win.devices import DeviceMonitor
 else:
     from spotpress.hw.lnx.devices import DeviceMonitor
+
+
+# Redireciona mensagens do Qt para /dev/null
+# if not WINDOWS_OS:
+#     import ctypes
+#     ctypes.CDLL(None).freopen(
+#         b"/dev/null", b"w", ctypes.c_void_p.in_dll(ctypes.CDLL(None), "stderr")
+#     )
 
 
 class SpotpressPreferences(QMainWindow):
@@ -60,7 +60,9 @@ class SpotpressPreferences(QMainWindow):
 
         # Quando fechar a janela, ao invés de fechar, esconder
         self.setWindowFlags(
-            self.windowFlags() | Qt.WindowMinimizeButtonHint  # pyright: ignore
+            # self.windowFlags() | Qt.WindowMinimizeButtonHint  # pyright: ignore
+            self.windowFlags()
+            | Qt.WindowType.WindowMinimizeButtonHint
         )
         if WINDOWS_OS:
             self.setMinimumSize(650, 760)
@@ -99,9 +101,11 @@ class SpotpressPreferences(QMainWindow):
         bottom_layout.addStretch()
         bottom_layout.addWidget(self.close_button)
 
-        container = QWidget()
-        container.setLayout(main_layout)
         main_layout.addLayout(bottom_layout)
+
+        container = QWidget()
+
+        container.setLayout(main_layout)
         self.setCentralWidget(container)
 
         # Functional Startups
@@ -135,15 +139,18 @@ class SpotpressPreferences(QMainWindow):
         self.preferences_tab.update_modes_list_from_context()
 
     def center_on_screen(self):
+        screen = QApplication.primaryScreen()
+        if screen:
+            geometry = screen.availableGeometry()
+            self.move(geometry.center() - self.rect().center())  # pyright: ignore
         # screen_geometry = QDesktopWidget().availableGeometry()
-        screen_geometry = QDesktopWidget().availableGeometry()
-        screen_center_point = screen_geometry.center()
-        qt_rectangle = self.frameGeometry()
-        qt_rectangle.moveCenter(screen_center_point)
-        self.move(qt_rectangle.topLeft())
+        # screen_center_point = screen_geometry.center()
+        # qt_rectangle = self.frameGeometry()
+        # qt_rectangle.moveCenter(screen_center_point)
+        # self.move(qt_rectangle.topLeft())
 
     def on_tray_icon_activated(self, reason):
-        if reason == QSystemTrayIcon.Trigger:  # pyright: ignore
+        if reason == QSystemTrayIcon.ActivationReason.Trigger:
 
             if self.isVisible():
                 self.hide()
@@ -162,7 +169,7 @@ class SpotpressPreferences(QMainWindow):
         self.devices_tab.devices_list.setEnabled(True)
         for dev in devices:
             item = QListWidgetItem(dev.display_name())
-            item.setData(Qt.UserRole, dev)  # pyright: ignore
+            item.setData(Qt.ItemDataRole.UserRole, dev)
             self.devices_tab.devices_list.addItem(item)
 
         self.preferences_tab.update_modes_list_from_context()
@@ -227,7 +234,7 @@ class SpotpressPreferences(QMainWindow):
         pixmap = QPixmap("spotpress.png")  # PNG já com o tamanho ideal
         msg.setIconPixmap(pixmap)
 
-        msg.exec_()
+        msg.exec()
 
     def append_log(self, message):
         self.log_tab.append_log_message(message)
@@ -255,16 +262,22 @@ class SpotpressPreferences(QMainWindow):
 
     # Métodos de eventos (placeholders)
     def on_quit_clicked(self):
+        self.hide()
         self.running = False
+        if hasattr(self, "device_monitor"):
+            self.device_monitor.stop_monitoring()
+        if self.tray_icon:
+            self.tray_icon.hide()
+        if self._ctx.overlay_window:
+            self._ctx.overlay_window.close()
+        if self._ctx.info_overlay:
+            self._ctx.info_overlay.close()
         self.save_config()
         QApplication.quit()
 
     def on_close_clicked(self):
         self.hide()
         self.append_log("Janela oculta. Clique no ícone da bandeja para restaurar.")
-
-    def on_refresh_clicked(self):
-        self.refresh_screens()
 
     def change_screen(self, screen_index):
         if self._ctx.screen_index != screen_index:
@@ -298,4 +311,4 @@ if __name__ == "__main__":
     app.setWindowIcon(QIcon("spotpress.png"))
     window = SpotpressPreferences()
     window.show()
-    sys.exit(app.exec_())
+    sys.exit(app.exec())

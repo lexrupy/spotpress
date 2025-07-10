@@ -2,6 +2,7 @@ import time
 import threading
 from pywinusb import hid
 
+from spotpress.hw.base_device_monitor import BaseDeviceMonitor
 from spotpress.hw.win.genericvrbox import GenericVRBoxPointer
 from spotpress.hw.win.baseusorangedotai import BaseusOrangeDotAI
 from spotpress.hw.win.virtualdevice import VirtualPointer
@@ -9,7 +10,7 @@ from spotpress.hw.win.virtualdevice import VirtualPointer
 DEVICE_CLASSES = {BaseusOrangeDotAI, GenericVRBoxPointer, VirtualPointer}
 
 
-class DeviceMonitor:
+class DeviceMonitor(BaseDeviceMonitor):
     def __init__(self, context):
         self._ctx = context
         self._ctx.device_monitor = self

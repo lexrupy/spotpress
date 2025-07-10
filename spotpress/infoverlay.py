@@ -1,12 +1,12 @@
 # infooverlay.py
 
-from PyQt5.QtWidgets import QWidget, QLabel
-from PyQt5.QtGui import QFont, QColor
-from PyQt5.QtCore import Qt
+from PyQt6.QtWidgets import QWidget, QLabel
+from PyQt6.QtGui import QFont, QColor, QPen
+from PyQt6.QtCore import Qt
 
-from PyQt5.QtWidgets import QWidget, QLabel
-from PyQt5.QtGui import QFont, QColor, QPainter, QFontMetrics
-from PyQt5.QtCore import Qt, QRect, QPoint
+from PyQt6.QtWidgets import QWidget, QLabel
+from PyQt6.QtGui import QFont, QColor, QPainter, QFontMetrics
+from PyQt6.QtCore import Qt, QRect, QPoint
 
 
 class InfOverlayWindow(QWidget):
@@ -15,25 +15,25 @@ class InfOverlayWindow(QWidget):
         self.screen_geometry = screen_geometry
 
         self.setWindowFlags(
-            Qt.FramelessWindowHint  # pyright: ignore
-            | Qt.WindowStaysOnTopHint  # pyright: ignore
-            | Qt.X11BypassWindowManagerHint  # pyright: ignore
-            | Qt.Tool  # pyright: ignore
+            Qt.WindowType.FramelessWindowHint
+            | Qt.WindowType.WindowStaysOnTopHint
+            | Qt.WindowType.X11BypassWindowManagerHint
+            | Qt.WindowType.Tool
         )
-        self.setAttribute(Qt.WA_TranslucentBackground)  # pyright: ignore
-        self.setAttribute(Qt.WA_ShowWithoutActivating)  # pyright: ignore
+        self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
+        self.setAttribute(Qt.WidgetAttribute.WA_ShowWithoutActivating)
 
         self.label = QLabel(self)
-        self.label.setAlignment(Qt.AlignCenter)  # pyright: ignore
+        self.label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.label.setStyleSheet("color: white;")
-        self.font = QFont("Arial", 44, QFont.Bold)
+        self.font = QFont("Arial", 44, QFont.Weight.Bold)
         self.label.setFont(self.font)
 
     def show_message(self, text):
         self.label.setText(text)
 
         # Calcula o tamanho da janela com base no texto
-        metrics = QFontMetrics(self.font)  # pyright: ignore
+        metrics = QFontMetrics(self.font)
         text_width = metrics.horizontalAdvance(text)
         text_height = metrics.height()
 
@@ -58,7 +58,7 @@ class InfOverlayWindow(QWidget):
     def paintEvent(self, event):
         # Desenha fundo preto translúcido
         painter = QPainter(self)
-        painter.setRenderHint(QPainter.Antialiasing)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
         painter.setBrush(QColor(0, 0, 0, 180))  # preto translúcido
-        painter.setPen(Qt.NoPen)  # pyright: ignore
+        painter.setPen(QPen(Qt.PenStyle.NoPen))
         painter.drawRoundedRect(self.rect(), 20, 20)

@@ -1,6 +1,7 @@
 import configparser
-from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import (
+from PyQt6.QtCore import Qt
+from PyQt6.QtWidgets import (
+    QAbstractItemView,
     QMessageBox,
     QSizePolicy,
     QListWidgetItem,
@@ -16,7 +17,7 @@ from PyQt5.QtWidgets import (
     QListWidget,
     QGroupBox,
 )
-from PyQt5.QtGui import QIcon, QPixmap, QColor
+from PyQt6.QtGui import QIcon, QPixmap, QColor
 from spotpress.utils import (
     DEFAULT_MODES,
     LASER_COLORS,
@@ -76,7 +77,9 @@ class PreferencesTab(QWidget):
         )
         self.spotlight_size = QSpinBox()
         self.spotlight_size.setMaximum(99)
-        self.spotlight_size.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        self.spotlight_size.setSizePolicy(
+            QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed
+        )
         self.spotlight_size.valueChanged.connect(self.on_spotlight_size_changed)
         self.spotlight_shade = QCheckBox("Show shade")
         self.spotlight_shade.stateChanged.connect(self.on_spotlight_shade_changed)
@@ -102,7 +105,9 @@ class PreferencesTab(QWidget):
         self.magnify_shape.addItem("Rectangle")
         self.magnify_shape.currentIndexChanged.connect(self.on_magnify_shape_changed)
         self.magnify_size = QSpinBox()
-        self.magnify_size.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        self.magnify_size.setSizePolicy(
+            QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed
+        )
         self.magnify_size.valueChanged.connect(self.on_magnify_size_changed)
         self.magnify_border = QCheckBox("Show border")
         self.magnify_border.stateChanged.connect(self.on_magnify_border_changed)
@@ -127,13 +132,17 @@ class PreferencesTab(QWidget):
         # Laser
         self.laser_dot_size = QSpinBox()
 
-        self.laser_dot_size.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        self.laser_dot_size.setSizePolicy(
+            QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed
+        )
         self.laser_dot_size.valueChanged.connect(self.on_laser_dot_size_changed)
         self.laser_color = create_color_combobox(LASER_COLORS)
         self.laser_color.currentIndexChanged.connect(self.on_laser_color_changed)
         self.laser_opacity = QSpinBox()
 
-        self.laser_opacity.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        self.laser_opacity.setSizePolicy(
+            QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed
+        )
 
         self.laser_opacity.valueChanged.connect(self.on_laser_opacity_changed)
         self.laser_reflection = QCheckBox("Show reflection")
@@ -156,13 +165,17 @@ class PreferencesTab(QWidget):
         # Marker
         self.marker_width = QSpinBox()
 
-        self.marker_width.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        self.marker_width.setSizePolicy(
+            QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed
+        )
         self.marker_width.valueChanged.connect(self.on_marker_width_changed)
         self.marker_color = create_color_combobox(PEN_COLORS)
         self.marker_color.currentIndexChanged.connect(self.on_marker_color_changed)
         self.marker_opacity = QSpinBox()
 
-        self.marker_opacity.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        self.marker_opacity.setSizePolicy(
+            QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed
+        )
         self.marker_opacity.valueChanged.connect(self.on_marker_opacity_changed)
 
         marker_group = make_group("Marker")
@@ -183,7 +196,9 @@ class PreferencesTab(QWidget):
         self.shade_color.currentIndexChanged.connect(self.on_shade_color_changed)
         self.shade_opacity = QSpinBox()
 
-        self.shade_opacity.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        self.shade_opacity.setSizePolicy(
+            QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed
+        )
         self.shade_opacity.valueChanged.connect(self.on_shade_opacity_changed)
 
         shade_group = make_group("Shade")
@@ -201,11 +216,15 @@ class PreferencesTab(QWidget):
         self.border_color.currentIndexChanged.connect(self.on_border_color_changed)
         self.border_opacity = QSpinBox()
 
-        self.border_opacity.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        self.border_opacity.setSizePolicy(
+            QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed
+        )
         self.border_opacity.valueChanged.connect(self.on_border_opacity_changed)
         self.border_width = QSpinBox()
 
-        self.border_width.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        self.border_width.setSizePolicy(
+            QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed
+        )
         self.border_width.valueChanged.connect(self.on_border_width_changed)
 
         border_group = make_group("Border")
@@ -255,9 +274,11 @@ class PreferencesTab(QWidget):
 
         # Lado direito com a lista de modos
         self.modes_list = QListWidget()
-        self.modes_list.setSelectionMode(QListWidget.SingleSelection)
-        self.modes_list.setDragDropMode(QListWidget.InternalMove)
-        self.modes_list.setDefaultDropAction(Qt.MoveAction)
+        self.modes_list.setSelectionMode(
+            QAbstractItemView.SelectionMode.SingleSelection
+        )
+        self.modes_list.setDragDropMode(QAbstractItemView.DragDropMode.InternalMove)
+        self.modes_list.setDefaultDropAction(Qt.DropAction.MoveAction)
         self.modes_list.currentRowChanged.connect(self.on_mode_selected)
 
         if self.modes_list.count() == 0:
@@ -265,11 +286,13 @@ class PreferencesTab(QWidget):
                 item = QListWidgetItem(name)
                 item.setFlags(
                     item.flags()
-                    | Qt.ItemIsUserCheckable
-                    | Qt.ItemIsEnabled
-                    | Qt.ItemIsSelectable
+                    | Qt.ItemFlag.ItemIsUserCheckable
+                    | Qt.ItemFlag.ItemIsEnabled
+                    | Qt.ItemFlag.ItemIsSelectable
                 )
-                item.setCheckState(Qt.Checked if enabled else Qt.Unchecked)
+                item.setCheckState(
+                    Qt.CheckState.Checked if enabled else Qt.CheckState.Unchecked
+                )
                 self.modes_list.addItem(item)
 
         right_side = QVBoxLayout()
@@ -356,12 +379,16 @@ class PreferencesTab(QWidget):
             if mode_id in self._ctx.compatible_modes:
                 # Modo compatível
                 item.setFlags(
-                    Qt.ItemIsUserCheckable | Qt.ItemIsEnabled | Qt.ItemIsSelectable
+                    Qt.ItemFlag.ItemIsUserCheckable
+                    | Qt.ItemFlag.ItemIsEnabled
+                    | Qt.ItemFlag.ItemIsSelectable
                 )
-                item.setCheckState(Qt.Checked)
+                item.setCheckState(Qt.CheckState.Checked)
             else:
                 # Modo não compatível
-                item.setFlags(Qt.NoItemFlags)  # total desativado (inclusive check)
+                item.setFlags(
+                    Qt.ItemFlag.NoItemFlags
+                )  # total desativado (inclusive check)
             self.modes_list.addItem(item)
 
             if mode_id == current_mode_id:
@@ -431,9 +458,6 @@ class PreferencesTab(QWidget):
     def on_border_width_changed(self):
         self.update_context_config()
 
-    def on_refresh_clicked(self):
-        self.refresh_screens()
-
     def on_general_always_capture_screenshot_changed(self):
         self.update_context_config()
 
@@ -445,11 +469,11 @@ class PreferencesTab(QWidget):
             self,
             "Confirmation",
             "Are you sure to reset configuration to defaults?",
-            QMessageBox.Yes | QMessageBox.No,
-            QMessageBox.No,
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No,
         )
 
-        if resposta == QMessageBox.Yes:
+        if resposta == QMessageBox.StandardButton.Yes:
             self.spotlight_size.setValue(35)
             self.spotlight_shade.setChecked(True)
             self.spotlight_shape.setCurrentIndex(0)
@@ -544,11 +568,13 @@ class PreferencesTab(QWidget):
                 item = QListWidgetItem(name)
                 item.setFlags(
                     item.flags()
-                    | Qt.ItemIsUserCheckable
-                    | Qt.ItemIsEnabled
-                    | Qt.ItemIsSelectable
+                    | Qt.ItemFlag.ItemIsUserCheckable
+                    | Qt.ItemFlag.ItemIsEnabled
+                    | Qt.ItemFlag.ItemIsSelectable
                 )
-                item.setCheckState(Qt.Checked if enabled else Qt.Unchecked)
+                item.setCheckState(
+                    Qt.CheckState.Checked if enabled else Qt.CheckState.Unchecked
+                )
                 self.modes_list.addItem(item)
             except Exception as e:
                 self._ctx.log(f"Erro ao carregar modo '{raw}': {e}")
@@ -610,7 +636,7 @@ class PreferencesTab(QWidget):
             name = item.text()
             mode_id = MODE_NAME_TO_ID.get(name)
             if mode_id is not None:
-                enabled = item.checkState() == Qt.Checked
+                enabled = item.checkState() == Qt.CheckState.Checked
                 config["Modes"][f"mode{i}"] = f"{mode_id}|{int(enabled)}"
 
         selected_items = self.modes_list.selectedItems()

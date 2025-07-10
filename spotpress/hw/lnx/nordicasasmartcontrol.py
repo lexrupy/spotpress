@@ -11,10 +11,10 @@ from spotpress.utils import (
     MODE_MAG_GLASS,
     MODE_PEN,
 )
-from spotpress.hw.lnx.pointerdevice import BasePointerDevice
+from spotpress.hw.lnx.pointerdevice import PointerDevice
 
 
-class ASASmartControlPointer(BasePointerDevice):
+class ASASmartControlPointer(PointerDevice):
     VENDOR_ID = 0x1915
     PRODUCT_ID = 0x1001
     # PRODUCT_DESCRIPTION = "123 COM Smart Control"

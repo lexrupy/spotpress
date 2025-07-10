@@ -11,10 +11,10 @@ from spotpress.utils import (
     MODE_SPOTLIGHT,
     MODE_MAG_GLASS,
 )
-from spotpress.hw.lnx.pointerdevice import BasePointerDevice
+from spotpress.hw.lnx.pointerdevice import PointerDevice
 
 
-class BaseusOrangeDotAI(BasePointerDevice):
+class BaseusOrangeDotAI(PointerDevice):
     VENDOR_ID = 0xABC8
     PRODUCT_ID = 0xCA08
     PRODUCT_DESCRIPTION = "Baseus Orange Dot AI Wireless Presenter"

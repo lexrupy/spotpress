@@ -1,7 +1,7 @@
-from PyQt5.QtGui import QGuiApplication
+from PyQt6.QtGui import QGuiApplication
 from spotpress.utils import MODE_MOUSE, ObservableDict
 
-from PyQt5.QtCore import QObject, pyqtSignal
+from PyQt6.QtCore import QObject, pyqtSignal
 
 
 class AppContext(QObject):

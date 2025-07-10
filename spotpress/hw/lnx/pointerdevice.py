@@ -5,10 +5,10 @@ import select
 import glob
 import evdev
 
-from spotpress.utils import SingletonMeta
+from spotpress.hw.base_pointer_device import BasePointerDevice
 
 
-class BasePointerDevice(metaclass=SingletonMeta):
+class PointerDevice(BasePointerDevice):
     VENDOR_ID = None
     PRODUCT_ID = None
 
@@ -20,7 +20,7 @@ class BasePointerDevice(metaclass=SingletonMeta):
         self._hidraw_thread = None
         self._ctx = app_ctx
         self._device_name = None
-        self._known_paths = []
+        self._known_paths = set()
 
         self.add_known_path(hidraw_path)
         for device in self.find_all_event_devices_for_known():
@@ -87,12 +87,12 @@ class BasePointerDevice(metaclass=SingletonMeta):
         return path is not None and path in self._known_paths
 
     def cleanup_known_paths(self):
-        self._known_paths = [p for p in self._known_paths if os.path.exists(p)]
+        self._known_paths = set([p for p in self._known_paths if os.path.exists(p)])
 
     def add_known_path(self, path):
         self.cleanup_known_paths()
         if path and path not in self._known_paths and os.path.exists(path):
-            self._known_paths.append(path)
+            self._known_paths.add(path)
             self.ensure_monitoring()
             return True
         return False

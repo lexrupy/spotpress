@@ -1,10 +1,10 @@
 import time
 import threading
 from spotpress.utils import MODE_LASER, MODE_MAG_GLASS, MODE_MOUSE, MODE_SPOTLIGHT
-from spotpress.hw.win.pointerdevice import BasePointerDevice
+from spotpress.hw.win.pointerdevice import PointerDevice
 
 
-class GenericVRBoxPointer(BasePointerDevice):
+class GenericVRBoxPointer(PointerDevice):
     VENDOR_ID = 0x248A
     PRODUCT_ID = 0x8266
     PRODUCT_DESCRIPTION = "Generic VR BOX Bluetooth Controller"
