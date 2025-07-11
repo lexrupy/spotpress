@@ -304,23 +304,6 @@ class BaseusOrangeDotAI(PointerDevice):
         except Exception as e:
             self._ctx.log(f"[ERRO] Exceção inesperada: {e}")
 
-    # def read_pacotes_completos(self, f):
-    #     buffer = bytearray()
-    #     try:
-    #         while not self._stop_hidraw_event.is_set():
-    #             b = f.read(1)
-    #             if not b:
-    #                 time.sleep(0.01)
-    #                 break
-    #             buffer += b
-    #             if b[0] == 182:
-    #                 yield bytes(buffer)
-    #                 buffer.clear()
-    #     except OSError as e:
-    #         self._ctx.log(f"[ERRO] Falha ao ler do device: {e}")
-    #     except Exception as e:
-    #         self._ctx.log(f"[ERRO] Exceção inesperada: {e}")
-
     def processa_pacote_hid(self, data):
 
         if not (
@@ -507,14 +490,6 @@ class BaseusOrangeDotAI(PointerDevice):
         if "hidraw" in device_info:
             return 'attrs{binterfaceprotocol}=="02"' in udevadm_output
         return True
-
-    def log_key(self, ev):
-        all_keys = ec.KEY | ec.BTN
-        if ev.value == 1:
-            direction = "down"
-        else:
-            direction = "up"
-        self._ctx.log(f"{all_keys[ev.code]} - {direction}")
 
     def handle_event(self, event):
         if event.type == ec.EV_REL:  # Movimento de Mouse

@@ -15,10 +15,10 @@ from spotpress.utils import (
 from spotpress.hw.lnx.pointerdevice import PointerDevice
 
 
-class ASASmartControlPointer(PointerDevice):
+class ASACompositeDevicePointer(PointerDevice):
     VENDOR_ID = 0x1915
-    PRODUCT_ID = 0x1001
-    PRODUCT_DESCRIPTION = "123 COM Smart Control"
+    PRODUCT_ID = 0x1025
+    # PRODUCT_DESCRIPTION = "123 COM Smart Control"
     DOUBLE_CLICK_INTERVAL = 0.3
 
     def __init__(self, app_ctx, hidraw_path):
@@ -173,20 +173,8 @@ class ASASmartControlPointer(PointerDevice):
         except Exception as e:
             self._ctx.log(f"[ERRO] Exceção inesperada: {e}")
 
-    # def read_pacotes_completos(self, f):
-    #     try:
-    #         while not self._stop_hidraw_event.is_set():
-    #             b = f.read(8)
-    #             if not b:
-    #                 # time.sleep(0.01)
-    #                 break
-    #             yield bytes(b)
-    #     except OSError as e:
-    #         self._ctx.log(f"[ERRO] Falha ao ler do device: {e}")
-    #     except Exception as e:
-    #         self._ctx.log(f"[ERRO] Exceção inesperada: {e}")
-
     def processa_pacote_hid(self, data):
+        self._ctx.log(f"{list(data)}")
 
         if not (isinstance(data, bytes) and len(data) == 8):
             return
@@ -217,8 +205,6 @@ class ASASmartControlPointer(PointerDevice):
         self._on_button_press(button)
 
     def executa_acao(self, button):
-        if self._ctx.active_device != self:
-            return
         ow = self._ctx.overlay_window
         current_mode = self._ctx.current_mode
         normal_mode = current_mode == MODE_MOUSE or ow.is_overlay_actually_visible()
@@ -346,8 +332,6 @@ class ASASmartControlPointer(PointerDevice):
                 return
 
     def handle_event(self, event):
-        if self._ctx.active_device != self:
-            return
         ow = self._ctx.overlay_window
         if event.type == ec.EV_REL:  # Movimento de Mouse
             self._last_movement_time = time.time()
@@ -371,6 +355,7 @@ class ASASmartControlPointer(PointerDevice):
                     self.executa_acao("MOUSE_MOVE")
 
         elif event.type == ec.EV_KEY:
+            self.log_key(event)
             self._last_movement_time = time.time()
             self._reset_auto_mode_timer()
             match event.code:

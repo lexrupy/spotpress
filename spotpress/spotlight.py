@@ -107,9 +107,9 @@ class SpotlightOverlayWindow(QWidget):
         self._pixmap_cleared = False
         self.clear_pixmap()
 
-        self.pen_color = PEN_COLORS[self._ctx.config.get("marker_color_index", 0)][0]
+        # self.pen_color = PEN_COLORS[self._ctx.config.get("marker_color_index", 0)][0]
 
-        self.cursor_pos = None  # Usado para exibir a caneta
+        # self.cursor_pos = None  # Usado para exibir a caneta
 
         # Timer de Atualização da Tela
         self.timer = QTimer()
@@ -385,15 +385,15 @@ class SpotlightOverlayWindow(QWidget):
     def change_line_width(self, delta: int):
         min_width = 1
         max_width = 20
-
-        new_width = self.current_line_width + delta
+        current_width = self._ctx.config["marker_width"]
+        new_width = current_width + delta
         if new_width < min_width:
             new_width = min_width
         elif new_width > max_width:
             new_width = max_width
 
-        if new_width != self.current_line_width:
-            self.current_line_width = new_width
+        if new_width != current_width:
+            self._ctx.config["marker_width"] = new_width
             self.update()  # atualiza a tela para refletir a mudança, se necessário
 
     def capture_screenshot(self, show_after=False, fill_pixmap=True, blur_level=0):
@@ -689,11 +689,16 @@ class SpotlightOverlayWindow(QWidget):
                 for i in range(len(path["points"]) - 1):
                     painter.drawLine(path["points"][i], path["points"][i + 1])
 
+        color = PEN_COLORS[self._ctx.config["marker_color_index"]][0]
+        opacity = max(1, int(self._ctx.config["marker_opacity"] * 255 / 100))
+        line_width = int(self._ctx.config["marker_width"])
+        color.setAlpha(opacity)
+
         # Desenha o path atual (se estiver desenhando)
         if self.drawing and len(self.current_path) > 1:
             pen = QPen(
-                self.pen_color,
-                self.current_line_width,
+                color,
+                line_width,
                 Qt_SolidLine,
                 Qt_RoundCap,
                 Qt_PenJoinStyle_RoundJoin,
@@ -703,7 +708,7 @@ class SpotlightOverlayWindow(QWidget):
                 painter.drawLine(self.current_path[i], self.current_path[i + 1])
 
         cursor_pos = self.mapFromGlobal(QCursor.pos())
-        brush = QBrush(self.pen_color)
+        brush = QBrush(color)
         painter.setBrush(brush)
         painter.setPen(QPen(Qt_NoPen))
 
@@ -749,7 +754,9 @@ class SpotlightOverlayWindow(QWidget):
             path.lineTo(p)
         path.closeSubpath()
 
-        painter.setBrush(QBrush(self.pen_color))
+        color = PEN_COLORS[self._ctx.config["marker_color_index"]][0]
+
+        painter.setBrush(QBrush(color))
         painter.setPen(QPen(Qt_NoPen))
 
         painter.drawPath(path)
@@ -760,11 +767,15 @@ class SpotlightOverlayWindow(QWidget):
 
     def finish_pen_path(self):
         if len(self.current_path) > 1:
+            color = PEN_COLORS[self._ctx.config["marker_color_index"]][0]
+            opacity = max(1, int(self._ctx.config["marker_opacity"] * 255 / 100))
+            line_width = int(self._ctx.config["marker_width"])
+            color.setAlpha(opacity)
             self.pen_paths.append(
                 {
                     "points": self.current_path[:],
-                    "color": self.pen_color,
-                    "width": self.current_line_width,
+                    "color": color,
+                    "width": line_width,
                 }
             )
         self.current_path = []

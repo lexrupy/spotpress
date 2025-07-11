@@ -4,6 +4,7 @@ import subprocess
 import select
 import glob
 import evdev
+from evdev import ecodes as ec
 
 from spotpress.hw.base_pointer_device import BasePointerDevice
 
@@ -292,3 +293,11 @@ class PointerDevice(BasePointerDevice):
     def processa_pacote_hid(self, data):
         # raise NotImplementedError()
         pass
+
+    def log_key(self, ev):
+        all_keys = ec.KEY | ec.BTN
+        if ev.value == 1:
+            direction = "down"
+        else:
+            direction = "up"
+        self._ctx.log(f"{all_keys[ev.code]} - {direction}")

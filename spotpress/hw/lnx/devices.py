@@ -9,6 +9,7 @@ from spotpress.hw.base_device_monitor import BaseDeviceMonitor
 from spotpress.hw.lnx.genericvrbox import GenericVRBoxPointer
 from spotpress.hw.lnx.baseusorangedotai import BaseusOrangeDotAI
 from spotpress.hw.lnx.nordicasasmartcontrol import ASASmartControlPointer
+from spotpress.hw.lnx.nordicasacompositedevice import ASACompositeDevicePointer
 from spotpress.hw.lnx.virtualdevice import VirtualPointer
 
 
@@ -16,6 +17,7 @@ DEVICE_CLASSES = {
     BaseusOrangeDotAI,
     GenericVRBoxPointer,
     ASASmartControlPointer,
+    ASACompositeDevicePointer,
 }
 
 
