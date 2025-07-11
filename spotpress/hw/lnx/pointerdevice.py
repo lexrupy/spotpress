@@ -23,8 +23,10 @@ from spotpress.hw.base_pointer_device import BasePointerDevice
 class PointerDevice(BasePointerDevice):
     VENDOR_ID = None
     PRODUCT_ID = None
+    IS_VIRTUAL = False
 
     def __init__(self, app_ctx, hidraw_path):
+        self._is_virtual = False
         self.path = hidraw_path
         self._stop_event = threading.Event()
         self._stop_hidraw_event = threading.Event()
@@ -37,6 +39,13 @@ class PointerDevice(BasePointerDevice):
         self.add_known_path(hidraw_path)
         for device in self.find_all_event_devices_for_known():
             self.add_known_path(device.path)
+
+    @classmethod
+    def is_virtual(cls):
+        return cls.IS_VIRTUAL
+
+    def is_virtual_device(self):
+        return self.__class__.IS_VIRTUAL
 
     def start_event_blocking(self):
         if not self._event_thread or not self._event_thread.is_alive():
@@ -60,7 +69,7 @@ class PointerDevice(BasePointerDevice):
             if self.__class__.is_known_device(path):
                 try:
                     devices.append(evdev.InputDevice(path))
-                    self._ctx.log(f"* Encontrado device de entrada: {path}")
+                    # self._ctx.log(f"* Encontrado device de entrada: {path}")
                 except Exception as e:
                     self._ctx.log(f"* Erro ao acessar {path}: {e}")
         return devices

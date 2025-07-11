@@ -16,11 +16,12 @@ class VirtualPointer(PointerDevice):
     LONG_PRESS_INTERVAL = 0.6  # tempo mínimo para considerar pressionamento longo
     DOUBLE_CLICK_INTERVAL = 0.4  # segundos
     REPEAT_INTERVAL = 0.05
+    IS_VIRTUAL = True
 
     def __init__(self, app_ctx, hidraw_path):
         super().__init__(app_ctx=app_ctx, hidraw_path=hidraw_path)
 
-        self._ctx.compatible_modes = [
+        self.compatible_modes = [
             MODE_MOUSE,
             MODE_SPOTLIGHT,
             MODE_LASER,
@@ -29,6 +30,9 @@ class VirtualPointer(PointerDevice):
         ]
 
     def monitor(self):
+        pass
+
+    def ensure_monitoring(self):
         pass
 
     @classmethod

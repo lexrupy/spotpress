@@ -1,9 +1,13 @@
 import configparser
 from spotpress.qtcompat import (
     QAbstractItemView,
+    QAbstractItemView_DragDropMode_InternalMove,
+    QAbstractItemView_SelectionMode_SingleSelection,
     QMessageBox,
-    QSizePolicy,
     QListWidgetItem,
+    QSizePolicy_Expanding,
+    QSizePolicy_Fixed,
+    QSizePolicy_Preferred,
     QWidget,
     QLabel,
     QPushButton,
@@ -23,6 +27,8 @@ from spotpress.qtcompat import (
     Qt_CheckState_Checked,
     Qt_CheckState_Unchecked,
     Qt_DropAction_MoveAction,
+    Qt_ItemFlag_ItemIsDragEnabled,
+    Qt_ItemFlag_ItemIsDropEnabled,
     Qt_ItemFlag_ItemIsEnabled,
     Qt_ItemFlag_ItemIsSelectable,
     Qt_ItemFlag_ItemIsUserCheckable,
@@ -61,17 +67,12 @@ class PreferencesTab(QWidget):
         super().__init__(parent)
         self._ctx = ctx
         self.init_ui()
-        # from spotpress.utils import set_debug_border
-        # set_debug_border(self)
 
     def init_ui(self):
         main_layout = QVBoxLayout()
 
         def make_group(title):
             box = QGroupBox(title)
-            # box.setStyleSheet(
-            #     "QGroupBox { background-color: #f0f0f0; border: 2px solid lightgray; margin-top: 1ex; }"
-            # )
             box.setStyleSheet(
                 "QGroupBox { background-color: #f4f4f4; border: 1px solid #ccc; border-radius: 4px; margin-top: 1ex; padding: 6px; }"
             )
@@ -80,21 +81,16 @@ class PreferencesTab(QWidget):
         left_layout = QVBoxLayout()
         right_layout = QVBoxLayout()
 
-        # Spotlight
         self.spotlight_shape = QComboBox()
         self.spotlight_shape.addItem("Elipse")
         self.spotlight_shape.addItem("Rectangle")
-        self.spotlight_shape.currentIndexChanged.connect(
-            self.on_spotlight_shape_changed
-        )
+        self.spotlight_shape.currentIndexChanged.connect(self.update_context_config)
         self.spotlight_size = QSpinBox()
         self.spotlight_size.setMaximum(99)
-        self.spotlight_size.setSizePolicy(
-            QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed
-        )
-        self.spotlight_size.valueChanged.connect(self.on_spotlight_size_changed)
+        self.spotlight_size.setSizePolicy(QSizePolicy_Expanding, QSizePolicy_Fixed)
+        self.spotlight_size.valueChanged.connect(self.update_context_config)
         self.spotlight_border = QCheckBox("Border")
-        self.spotlight_border.stateChanged.connect(self.on_spotlight_border_changed)
+        self.spotlight_border.stateChanged.connect(self.update_context_config)
 
         self.spotlight_blur_radio = QRadioButton("Blur")
         self.spotlight_shade_radio = QRadioButton("Shade")
@@ -103,9 +99,12 @@ class PreferencesTab(QWidget):
         self.spotlight_radio_group.addButton(self.spotlight_blur_radio, 0)
         self.spotlight_radio_group.addButton(self.spotlight_shade_radio, 1)
 
-        self.spotlight_radio_group.buttonClicked.connect(
-            self.on_spotlight_background_changed
-        )
+        self.spotlight_radio_group.buttonClicked.connect(self.update_context_config)
+
+        self.spotlight_bg_blur = QSpinBox()
+        self.spotlight_bg_blur.setMaximum(20)
+        self.spotlight_bg_blur.setMinimum(1)
+        self.spotlight_bg_blur.valueChanged.connect(self.update_context_config)
 
         spot_radio_layout = QHBoxLayout()
         spot_radio_layout.addWidget(QLabel("Background:"))
@@ -115,12 +114,14 @@ class PreferencesTab(QWidget):
         spotlight_group = make_group("Spotlight")
         spotlight_layout = QGridLayout()
         spotlight_layout.addWidget(QLabel("Shape:"), 0, 0)
-        spotlight_layout.addWidget(self.spotlight_shape, 0, 1, 1, 2)
+        spotlight_layout.addWidget(self.spotlight_shape, 0, 1)
+        spotlight_layout.addWidget(self.spotlight_border, 0, 2)
         spotlight_layout.addWidget(QLabel("Size:"), 1, 0)
         spotlight_layout.addWidget(self.spotlight_size, 1, 1)
-        spotlight_layout.addWidget(QLabel("% of screen height"), 1, 2)
-        spotlight_layout.addWidget(self.spotlight_border, 2, 0)
-        spotlight_layout.addLayout(spot_radio_layout, 2, 1)
+        spotlight_layout.addWidget(QLabel("% of screen"), 1, 2)
+        spotlight_layout.addLayout(spot_radio_layout, 2, 0, 1, 3)
+        spotlight_layout.addWidget(QLabel("Background blur level:"), 3, 0, 1, 2)
+        spotlight_layout.addWidget(self.spotlight_bg_blur, 3, 2)
         spotlight_group.setLayout(spotlight_layout)
         left_layout.addWidget(spotlight_group)
 
@@ -129,17 +130,13 @@ class PreferencesTab(QWidget):
 
         self.magnify_shape.addItem("Elipse")
         self.magnify_shape.addItem("Rectangle")
-        self.magnify_shape.currentIndexChanged.connect(self.on_magnify_shape_changed)
+        self.magnify_shape.currentIndexChanged.connect(self.update_context_config)
         self.magnify_size = QSpinBox()
-        self.magnify_size.setSizePolicy(
-            QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed
-        )
-        self.magnify_size.valueChanged.connect(self.on_magnify_size_changed)
+        self.magnify_size.setSizePolicy(QSizePolicy_Expanding, QSizePolicy_Fixed)
+        self.magnify_size.valueChanged.connect(self.update_context_config)
         self.magnify_border = QCheckBox("Border")
-        self.magnify_border.stateChanged.connect(self.on_magnify_border_changed)
+        self.magnify_border.stateChanged.connect(self.update_context_config)
 
-        # self.magnify_shade = QCheckBox("Show shade")
-        # self.magnify_shade.stateChanged.connect(self.on_magnify_shade_changed)
         self.magnify_blur_radio = QRadioButton("Blur")
         self.magnify_shade_radio = QRadioButton("Shade")
         self.magnify_none_radio = QRadioButton("None")
@@ -149,11 +146,11 @@ class PreferencesTab(QWidget):
         self.magnify_radio_group.addButton(self.magnify_shade_radio, 1)
         self.magnify_radio_group.addButton(self.magnify_none_radio, 2)
 
-        self.magnify_radio_group.buttonClicked.connect(
-            self.on_magnify_background_changed
-        )
+        self.magnify_radio_group.buttonClicked.connect(self.update_context_config)
 
         radio_layout = QHBoxLayout()
+
+        radio_layout.addWidget(QLabel("Background:"))
         radio_layout.addWidget(self.magnify_blur_radio)
         radio_layout.addWidget(self.magnify_shade_radio)
         radio_layout.addWidget(self.magnify_none_radio)
@@ -161,71 +158,70 @@ class PreferencesTab(QWidget):
         self.magnify_zoom = QSpinBox()
         self.magnify_zoom.setMaximum(5)
         self.magnify_zoom.setMinimum(2)
-        self.magnify_zoom.valueChanged.connect(self.on_magnify_zoom_changed)
+        self.magnify_zoom.valueChanged.connect(self.update_context_config)
+
+        self.magnify_bg_blur = QSpinBox()
+        self.magnify_bg_blur.setMaximum(20)
+        self.magnify_bg_blur.setMinimum(1)
+        self.magnify_bg_blur.valueChanged.connect(self.update_context_config)
 
         magnify_group = make_group("Magnifier")
         magnify_layout = QGridLayout()
         magnify_layout.addWidget(QLabel("Shape:"), 0, 0)
-        magnify_layout.addWidget(self.magnify_shape, 0, 1, 1, 2)
+        magnify_layout.addWidget(self.magnify_shape, 0, 1)
+        magnify_layout.addWidget(self.magnify_border, 0, 2)
         magnify_layout.addWidget(QLabel("Size:"), 1, 0)
         magnify_layout.addWidget(self.magnify_size, 1, 1)
-        magnify_layout.addWidget(QLabel("% of screen height"), 1, 2)
-        magnify_layout.addWidget(self.magnify_border, 2, 0)
-        magnify_layout.addWidget(QLabel("Background:"), 2, 1)
-        magnify_layout.addLayout(radio_layout, 2, 2)
+        magnify_layout.addWidget(QLabel("% of screen"), 1, 2)
+        magnify_layout.addLayout(radio_layout, 2, 0, 1, 3)
         magnify_layout.addWidget(QLabel("Zoom level:"), 3, 0)
-        magnify_layout.addWidget(self.magnify_zoom, 3, 1, 1, 2)
+        magnify_layout.addWidget(self.magnify_zoom, 3, 1)
+        magnify_layout.addWidget(QLabel("Background blur Level:"), 4, 0, 1, 2)
+        magnify_layout.addWidget(self.magnify_bg_blur, 4, 2)
+
         magnify_group.setLayout(magnify_layout)
         left_layout.addWidget(magnify_group)
 
         # Laser
         self.laser_dot_size = QSpinBox()
 
-        self.laser_dot_size.setSizePolicy(
-            QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed
-        )
-        self.laser_dot_size.valueChanged.connect(self.on_laser_dot_size_changed)
+        self.laser_dot_size.setSizePolicy(QSizePolicy_Expanding, QSizePolicy_Fixed)
+        self.laser_dot_size.valueChanged.connect(self.update_context_config)
         self.laser_color = create_color_combobox(LASER_COLORS)
-        self.laser_color.currentIndexChanged.connect(self.on_laser_color_changed)
+        self.laser_color.currentIndexChanged.connect(self.update_context_config)
         self.laser_opacity = QSpinBox()
 
-        self.laser_opacity.setSizePolicy(
-            QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed
-        )
+        self.laser_opacity.setSizePolicy(QSizePolicy_Expanding, QSizePolicy_Fixed)
 
-        self.laser_opacity.valueChanged.connect(self.on_laser_opacity_changed)
-        self.laser_reflection = QCheckBox("Show reflection")
-        self.laser_reflection.stateChanged.connect(self.on_laser_reflection_changed)
+        self.laser_opacity.valueChanged.connect(self.update_context_config)
+        self.laser_reflection = QCheckBox("Reflection")
+        self.laser_reflection.stateChanged.connect(self.update_context_config)
 
         laser_group = make_group("Laser")
         laser_layout = QGridLayout()
         laser_layout.addWidget(QLabel("Dot size:"), 0, 0)
         laser_layout.addWidget(self.laser_dot_size, 0, 1)
-        laser_layout.addWidget(QLabel("% of screen height"), 0, 2)
+        laser_layout.addWidget(QLabel("% of screen"), 0, 2)
         laser_layout.addWidget(QLabel("Dot color:"), 1, 0)
-        laser_layout.addWidget(self.laser_color, 1, 1, 1, 2)
+        laser_layout.addWidget(self.laser_color, 1, 1)
+        laser_layout.addWidget(self.laser_reflection, 1, 2)
         laser_layout.addWidget(QLabel("Opacity:"), 2, 0)
         laser_layout.addWidget(self.laser_opacity, 2, 1)
         laser_layout.addWidget(QLabel("%"), 2, 2)
-        laser_layout.addWidget(self.laser_reflection, 3, 0, 1, 3)
         laser_group.setLayout(laser_layout)
         left_layout.addWidget(laser_group)
 
         # Marker
         self.marker_width = QSpinBox()
 
-        self.marker_width.setSizePolicy(
-            QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed
-        )
-        self.marker_width.valueChanged.connect(self.on_marker_width_changed)
+        self.marker_width.setSizePolicy(QSizePolicy_Expanding, QSizePolicy_Fixed)
+        self.marker_width.valueChanged.connect(self.update_context_config)
         self.marker_color = create_color_combobox(PEN_COLORS)
-        self.marker_color.currentIndexChanged.connect(self.on_marker_color_changed)
+        self.marker_color.currentIndexChanged.connect(self.update_context_config)
         self.marker_opacity = QSpinBox()
 
-        self.marker_opacity.setSizePolicy(
-            QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed
-        )
-        self.marker_opacity.valueChanged.connect(self.on_marker_opacity_changed)
+        self.marker_opacity.setSizePolicy(QSizePolicy_Expanding, QSizePolicy_Fixed)
+        self.marker_opacity.valueChanged.connect(self.update_context_config)
 
         marker_group = make_group("Marker")
         marker_layout = QGridLayout()
@@ -233,7 +229,7 @@ class PreferencesTab(QWidget):
         marker_layout.addWidget(self.marker_width, 0, 1)
         marker_layout.addWidget(QLabel("pixels"), 0, 2)
         marker_layout.addWidget(QLabel("Color:"), 1, 0)
-        marker_layout.addWidget(self.marker_color, 1, 1, 1, 2)
+        marker_layout.addWidget(self.marker_color, 1, 1)
         marker_layout.addWidget(QLabel("Opacity:"), 2, 0)
         marker_layout.addWidget(self.marker_opacity, 2, 1)
         marker_layout.addWidget(QLabel("%"), 2, 2)
@@ -242,18 +238,16 @@ class PreferencesTab(QWidget):
 
         # Shade
         self.shade_color = create_named_color_combobox(SHADE_COLORS)
-        self.shade_color.currentIndexChanged.connect(self.on_shade_color_changed)
+        self.shade_color.currentIndexChanged.connect(self.update_context_config)
         self.shade_opacity = QSpinBox()
 
-        self.shade_opacity.setSizePolicy(
-            QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed
-        )
-        self.shade_opacity.valueChanged.connect(self.on_shade_opacity_changed)
+        self.shade_opacity.setSizePolicy(QSizePolicy_Expanding, QSizePolicy_Fixed)
+        self.shade_opacity.valueChanged.connect(self.update_context_config)
 
         shade_group = make_group("Shade")
         shade_layout = QGridLayout()
         shade_layout.addWidget(QLabel("Color:"), 0, 0)
-        shade_layout.addWidget(self.shade_color, 0, 1, 1, 2)
+        shade_layout.addWidget(self.shade_color, 0, 1)
         shade_layout.addWidget(QLabel("Opacity:"), 1, 0)
         shade_layout.addWidget(self.shade_opacity, 1, 1)
         shade_layout.addWidget(QLabel("%"), 1, 2)
@@ -262,19 +256,15 @@ class PreferencesTab(QWidget):
 
         # Border
         self.border_color = create_color_combobox(PEN_COLORS)
-        self.border_color.currentIndexChanged.connect(self.on_border_color_changed)
+        self.border_color.currentIndexChanged.connect(self.update_context_config)
         self.border_opacity = QSpinBox()
 
-        self.border_opacity.setSizePolicy(
-            QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed
-        )
-        self.border_opacity.valueChanged.connect(self.on_border_opacity_changed)
+        self.border_opacity.setSizePolicy(QSizePolicy_Expanding, QSizePolicy_Fixed)
+        self.border_opacity.valueChanged.connect(self.update_context_config)
         self.border_width = QSpinBox()
 
-        self.border_width.setSizePolicy(
-            QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed
-        )
-        self.border_width.valueChanged.connect(self.on_border_width_changed)
+        self.border_width.setSizePolicy(QSizePolicy_Expanding, QSizePolicy_Fixed)
+        self.border_width.valueChanged.connect(self.update_context_config)
 
         border_group = make_group("Border")
         border_layout = QGridLayout()
@@ -296,19 +286,17 @@ class PreferencesTab(QWidget):
         # Lado esquerdo com checkboxes e botões
         left_side = QVBoxLayout()
 
-        checkbox_layout = QHBoxLayout()
+        checkbox_layout = QVBoxLayout()
         self.general_always_capture_screenshot = QCheckBox("Always capture screenshot")
         self.general_always_capture_screenshot.stateChanged.connect(
-            self.on_general_always_capture_screenshot_changed
+            self.update_context_config
         )
         self.general_enable_auto_mode = QCheckBox("Enable AUTO mode if supported")
-        self.general_enable_auto_mode.stateChanged.connect(
-            self.on_general_enable_auto_mode_changed
-        )
+        self.general_enable_auto_mode.stateChanged.connect(self.update_context_config)
         checkbox_layout.addWidget(self.general_always_capture_screenshot)
         checkbox_layout.addWidget(self.general_enable_auto_mode)
 
-        button_layout = QHBoxLayout()
+        button_layout = QVBoxLayout()
         self.reset_button = QPushButton("Reset Settings")
         self.test_button = QPushButton("Show Test...")
         self.reset_button.setToolTip("Restaura as configurações padrão")
@@ -324,9 +312,9 @@ class PreferencesTab(QWidget):
         # Lado direito com a lista de modos
         self.modes_list = QListWidget()
         self.modes_list.setSelectionMode(
-            QAbstractItemView.SelectionMode.SingleSelection
+            QAbstractItemView_SelectionMode_SingleSelection
         )
-        self.modes_list.setDragDropMode(QAbstractItemView.DragDropMode.InternalMove)
+        self.modes_list.setDragDropMode(QAbstractItemView_DragDropMode_InternalMove)
         self.modes_list.setDefaultDropAction(Qt_DropAction_MoveAction)
         self.modes_list.currentRowChanged.connect(self.on_mode_selected)
 
@@ -338,6 +326,8 @@ class PreferencesTab(QWidget):
                     | Qt_ItemFlag_ItemIsUserCheckable
                     | Qt_ItemFlag_ItemIsEnabled
                     | Qt_ItemFlag_ItemIsSelectable
+                    | Qt_ItemFlag_ItemIsDragEnabled
+                    | Qt_ItemFlag_ItemIsDropEnabled
                 )
                 item.setCheckState(
                     Qt_CheckState_Checked if enabled else Qt_CheckState_Unchecked
@@ -374,11 +364,13 @@ class PreferencesTab(QWidget):
             cfg["spotlight_background_mode"] = int(
                 self.spotlight_radio_group.checkedId()
             )
+            cfg["spotlight_background_blur_level"] = self.spotlight_bg_blur.value()
             cfg["magnify_shape"] = self.magnify_shape.currentText()
             cfg["magnify_size"] = self.magnify_size.value()
             cfg["magnify_border"] = self.magnify_border.isChecked()
             cfg["magnify_background_mode"] = int(self.magnify_radio_group.checkedId())
             cfg["magnify_zoom"] = self.magnify_zoom.value()
+            cfg["magnify_background_blur_level"] = self.magnify_bg_blur.value()
             cfg["laser_dot_size"] = self.laser_dot_size.value()
             cfg["laser_color_index"] = self.laser_color.currentIndex()
             cfg["laser_opacity"] = self.laser_opacity.value()
@@ -401,7 +393,7 @@ class PreferencesTab(QWidget):
         if row < 0 or row >= self.modes_list.count():
             return
         item = self.modes_list.item(row)
-        name = item.text()
+        name = item.text()  # pyright: ignore
         mode_id = MODE_NAME_TO_ID.get(name)
         if mode_id is not None and mode_id != self._ctx.current_mode:
             self._ctx.current_mode = mode_id
@@ -411,7 +403,7 @@ class PreferencesTab(QWidget):
     def on_context_mode_changed(self, mode_id):
         for i in range(self.modes_list.count()):
             item = self.modes_list.item(i)
-            name = item.text()
+            name = item.text()  # pyright: ignore
             mid = MODE_NAME_TO_ID.get(name)
             if mid == mode_id:
                 self.modes_list.blockSignals(True)  # Evita disparar on_mode_selected
@@ -450,75 +442,6 @@ class PreferencesTab(QWidget):
         if selected_row >= 0:
             self.modes_list.setCurrentRow(selected_row)
 
-    def on_spotlight_shape_changed(self):
-        self.update_context_config()
-
-    def on_spotlight_size_changed(self):
-        self.update_context_config()
-
-    def on_spotlight_background_changed(self):
-        self.update_context_config()
-
-    def on_magnify_background_changed(self):
-        self.update_context_config()
-
-    def on_spotlight_border_changed(self):
-        self.update_context_config()
-
-    def on_magnify_shape_changed(self):
-        self.update_context_config()
-
-    def on_magnify_size_changed(self):
-        self.update_context_config()
-
-    def on_magnify_border_changed(self):
-        self.update_context_config()
-
-    def on_magnify_zoom_changed(self):
-        self.update_context_config()
-
-    def on_laser_dot_size_changed(self):
-        self.update_context_config()
-
-    def on_laser_color_changed(self):
-        self.update_context_config()
-
-    def on_laser_opacity_changed(self):
-        self.update_context_config()
-
-    def on_laser_reflection_changed(self):
-        self.update_context_config()
-
-    def on_marker_width_changed(self):
-        self.update_context_config()
-
-    def on_marker_color_changed(self):
-        self.update_context_config()
-
-    def on_marker_opacity_changed(self):
-        self.update_context_config()
-
-    def on_shade_color_changed(self):
-        self.update_context_config()
-
-    def on_shade_opacity_changed(self):
-        self.update_context_config()
-
-    def on_border_color_changed(self):
-        self.update_context_config()
-
-    def on_border_opacity_changed(self):
-        self.update_context_config()
-
-    def on_border_width_changed(self):
-        self.update_context_config()
-
-    def on_general_always_capture_screenshot_changed(self):
-        self.update_context_config()
-
-    def on_general_enable_auto_mode_changed(self):
-        self.update_context_config()
-
     def on_reset_clicked(self):
         resposta = QMessageBox.question(
             self,
@@ -530,8 +453,8 @@ class PreferencesTab(QWidget):
 
         if resposta == QMessageBox.StandardButton.Yes:
             self.spotlight_size.setValue(35)
-            # self.magnify_shade.setChecked(False)
             self.spotlight_shape.setCurrentIndex(0)
+            self.spotlight_shade_radio.setChecked(True)
             self.magnify_size.setValue(35)
             self.magnify_border.setChecked(True)
             self.magnify_shape.setCurrentIndex(1)
@@ -541,9 +464,9 @@ class PreferencesTab(QWidget):
             self.marker_width.setValue(20)
             self.marker_opacity.setValue(90)
             self.marker_color.setCurrentIndex(1)
-            self.shade_opacity.setValue(90)
+            self.shade_opacity.setValue(75)
             self.border_opacity.setValue(90)
-            self.border_width.setValue(16)
+            self.border_width.setValue(8)
             self.border_color.setCurrentIndex(7)  # White
             self.general_always_capture_screenshot.setChecked(True)
             self.general_enable_auto_mode.setChecked(True)
@@ -573,6 +496,7 @@ class PreferencesTab(QWidget):
         )
         self.spotlight_size.setValue(getint("Spotlight", "size", 35))
         self.spotlight_border.setChecked(getbool("Spotlight", "border", True))
+        self.spotlight_bg_blur.setValue(getint("Spotlight", "background_blur", 5))
 
         spt_btn = self.spotlight_radio_group.button(
             getint("Spotlight", "background_mode", 1)
@@ -591,10 +515,13 @@ class PreferencesTab(QWidget):
         self.magnify_size.setValue(getint("Magnify", "size", 35))
         self.magnify_border.setChecked(getbool("Magnify", "border", True))
         self.magnify_zoom.setValue(getint("Magnify", "zoom", 2))
+        self.magnify_bg_blur.setValue(getint("Magnify", "background_blur", 5))
 
-        btn = self.magnify_radio_group.button(getint("Magnify", "background_mode", 2))
-        if btn is not None:
-            btn.setChecked(True)
+        mag_btn = self.magnify_radio_group.button(
+            getint("Magnify", "background_mode", 2)
+        )
+        if mag_btn is not None:
+            mag_btn.setChecked(True)
         else:
             self.magnify_none_radio.setChecked(True)  # fallback
 
@@ -651,7 +578,7 @@ class PreferencesTab(QWidget):
     def set_current_mode(self, current_mode: int):
         for i in range(self.modes_list.count()):
             item = self.modes_list.item(i)
-            name = item.text()
+            name = item.text()  # pyright: ignore
             mode_id = MODE_NAME_TO_ID.get(name)
             if mode_id == current_mode:
                 self.modes_list.blockSignals(True)
@@ -665,12 +592,14 @@ class PreferencesTab(QWidget):
             "size": str(self.spotlight_size.value()),
             "border": str(self.spotlight_border.isChecked()),
             "background_mode": str(self.spotlight_radio_group.checkedId()),
+            "background_blur": str(self.spotlight_bg_blur.value()),
         }
         config["Magnify"] = {
             "shape": self.magnify_shape.currentText(),
             "size": str(self.magnify_size.value()),
             "border": str(self.magnify_border.isChecked()),
             "background_mode": str(self.magnify_radio_group.checkedId()),
+            "background_blur": str(self.magnify_bg_blur.value()),
             "zoom": str(self.magnify_zoom.value()),
         }
         config["Laser"] = {
@@ -702,10 +631,10 @@ class PreferencesTab(QWidget):
 
         for i in range(self.modes_list.count()):
             item = self.modes_list.item(i)
-            name = item.text()
+            name = item.text()  # pyright: ignore
             mode_id = MODE_NAME_TO_ID.get(name)
             if mode_id is not None:
-                enabled = item.checkState() == Qt_CheckState_Checked
+                enabled = item.checkState() == Qt_CheckState_Checked  # pyright: ignore
                 config["Modes"][f"mode{i}"] = f"{mode_id}|{int(enabled)}"
 
         selected_items = self.modes_list.selectedItems()

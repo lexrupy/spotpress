@@ -65,4 +65,4 @@ class LogTab(QWidget):
             QMessageBox.information(self, "Sem conteúdo", "O log está vazio.")
             return
         clipboard = QApplication.clipboard()
-        clipboard.setText(self.log_text.toPlainText())
+        clipboard.setText(self.log_text.toPlainText())  # pyright: ignore

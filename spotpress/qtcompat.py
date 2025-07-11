@@ -70,6 +70,15 @@ try:
 
     QSizePolicy_Preferred = QSizePolicy.Policy.Preferred
     QSizePolicy_Fixed = QSizePolicy.Policy.Fixed
+    QSizePolicy_Expanding = QSizePolicy.Policy.Expanding
+
+    QAbstractItemView_SelectionMode_SingleSelection = (
+        QAbstractItemView.SelectionMode.SingleSelection
+    )
+
+    QAbstractItemView_DragDropMode_InternalMove = (
+        QAbstractItemView.DragDropMode.InternalMove
+    )
 
     # Enums e constantes adaptadas PyQt6
     Qt_FramelessWindowHint = Qt.WindowType.FramelessWindowHint
@@ -86,6 +95,8 @@ try:
     Qt_Key_P = Qt.Key.Key_P
     Qt_Key_E = Qt.Key.Key_E
     Qt_Key_M = Qt.Key.Key_M
+    Qt_Key_H = Qt.Key.Key_H
+    Qt_Key_S = Qt.Key.Key_S
     Qt_Key_PageUp = Qt.Key.Key_PageUp
     Qt_Key_PageDown = Qt.Key.Key_PageDown
     Qt_Key_Shift = Qt.Key.Key_Shift
@@ -103,6 +114,8 @@ try:
     Qt_ItemFlag_ItemIsUserCheckable = Qt.ItemFlag.ItemIsUserCheckable
     Qt_ItemFlag_ItemIsEnabled = Qt.ItemFlag.ItemIsEnabled
     Qt_ItemFlag_ItemIsSelectable = Qt.ItemFlag.ItemIsSelectable
+    Qt_ItemFlag_ItemIsDragEnabled = Qt.ItemFlag.ItemIsDragEnabled
+    Qt_ItemFlag_ItemIsDropEnabled = Qt.ItemFlag.ItemIsDropEnabled
 
     Qt_ItemFlag_NoItemFlags = Qt.ItemFlag.NoItemFlags
 
@@ -216,6 +229,15 @@ except ImportError:
 
     QSizePolicy_Preferred = QSizePolicy.Preferred
     QSizePolicy_Fixed = QSizePolicy.Fixed
+    QSizePolicy_Expanding = QSizePolicy.Expanding
+
+    QAbstractItemView_SelectionMode_SingleSelection = (
+        QAbstractItemView.SelectionMode.SingleSelection
+    )
+
+    QAbstractItemView_DragDropMode_InternalMove = (
+        QAbstractItemView.DragDropMode.InternalMove
+    )
 
     Qt_WindowMinimizeButtonHint = Qt.WindowMinimizeButtonHint
     Qt_WindowType_Tool = Qt.Tool
@@ -242,6 +264,8 @@ except ImportError:
     Qt_Key_P = Qt.Key_P
     Qt_Key_E = Qt.Key_E
     Qt_Key_M = Qt.Key_M
+    Qt_Key_H = Qt.Key_H
+    Qt_Key_S = Qt.Key_S
     Qt_Key_PageUp = Qt.Key_PageUp
     Qt_Key_PageDown = Qt.Key_PageDown
     Qt_Key_Shift = Qt.Key_Shift
@@ -258,6 +282,8 @@ except ImportError:
     Qt_ItemFlag_ItemIsUserCheckable = Qt.ItemIsUserCheckable
     Qt_ItemFlag_ItemIsEnabled = Qt.ItemIsEnabled
     Qt_ItemFlag_ItemIsSelectable = Qt.ItemIsSelectable
+    Qt_ItemFlag_ItemIsDragEnabled = Qt.ItemIsDragEnabled
+    Qt_ItemFlag_ItemIsDropEnabled = Qt.ItemIsDropEnabled
 
     Qt_ItemFlag_NoItemFlags = Qt.NoItemFlags
 
@@ -311,9 +337,7 @@ __all__ = [
     "QSystemTrayIcon",
     "QComboBox",
     "QListWidgetItem",
-    "QAbstractItemView",
     "QFontMetrics",
-    "QSizePolicy",
     "QSizePolicy_Fixed",
     "QSizePolicy_Preferred",
     "QPainter_CompositionMode_Clear",
@@ -356,6 +380,9 @@ __all__ = [
     "Qt_Key_Control",
     "Qt_Key_P",
     "Qt_Key_E",
+    "Qt_Key_M",
+    "Qt_Key_H",
+    "Qt_Key_S",
     "Qt_Key_PageUp",
     "Qt_Key_PageDown",
     "Qt_Key_Shift",
@@ -369,6 +396,11 @@ __all__ = [
     "QEvent_MouseButtonRelease",
     "QEvent_MouseMove",
     "QtItem_UserRole",
+    "Qt_ItemFlag_ItemIsUserCheckable",
+    "Qt_ItemFlag_ItemIsEnabled",
+    "Qt_ItemFlag_ItemIsSelectable",
+    "Qt_ItemFlag_ItemIsDragEnabled",
+    "Qt_ItemFlag_ItemIsDropEnabled",
     "pyqtSignal",
     "pyqtSlot",
     "Q_ARG",

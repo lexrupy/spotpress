@@ -13,7 +13,6 @@ from spotpress.qtcompat import (
     QPen,
     QBrush,
     QGuiApplication,
-    Qt,
     QRect,
     QTimer,
     QPointF,
@@ -27,7 +26,11 @@ from spotpress.qtcompat import (
     Qt_Key_Escape,
     Qt_Key_M,
     Qt_Key_P,
+    Qt_Key_H,
     Qt_NoPen,
+    Qt_PenJoinStyle_RoundJoin,
+    Qt_RoundCap,
+    Qt_SolidLine,
     Qt_WidgetAttribute_WA_ShowWithoutActivating,
     Qt_WidgetAttribute_WA_TranslucentBackground,
     Qt_WidgetAttribute_WA_TransparentForMouseEvents,
@@ -35,7 +38,6 @@ from spotpress.qtcompat import (
     Qt_WindowType_Tool,
     Qt_WindowType_WindowStaysOnTopHint,
     Qt_WindowType_X11BypassWindowManagerHint,
-    pyqtSignal,
 )
 
 from .utils import (
@@ -135,7 +137,7 @@ class SpotlightOverlayWindow(QWidget):
         key = event.key()
         now = time.time()
 
-        if key == Qt.Key.Key_Escape:
+        if key == Qt_Key_Escape:
 
             if (
                 now - self.last_key_time < 1.0
@@ -143,13 +145,13 @@ class SpotlightOverlayWindow(QWidget):
             ):
                 self.quit()
         elif key == Qt_Key_P:
-
             self.capture_screenshot()
             self.update()
         elif key == Qt_Key_M:
-
             self.switch_mode(step=1)
             self.update()
+        elif key == Qt_Key_H:
+            self.hide_overlay()
 
         self.last_key_time = now
         self.last_key_pressed = key
@@ -221,7 +223,11 @@ class SpotlightOverlayWindow(QWidget):
                 if self._ctx.current_mode == MODE_MAG_GLASS:
                     if self._ctx.config["magnify_zoom"] <= self.zoom_min:
                         self._ctx.config["magnify_zoom"] = self.zoom_min
-                    self.capture_screenshot(show_after=True, generate_blurred=True)
+
+                    self.capture_screenshot(
+                        show_after=True,
+                        blur_level=self._ctx.config["magnify_background_blur_level"],
+                    )
                 elif self._ctx.current_mode == MODE_LASER and self.laser_inverted():
                     self.capture_screenshot(show_after=True)
                 elif (
@@ -229,7 +235,9 @@ class SpotlightOverlayWindow(QWidget):
                     and self._ctx.config["spotlight_background_mode"] == 0
                 ):
                     self.capture_screenshot(
-                        generate_blurred=True, fill_pixmap=False, show_after=True
+                        fill_pixmap=False,
+                        show_after=True,
+                        blur_level=self._ctx.config["spotlight_background_blur_level"],
                     )
                 elif self._ctx.current_mode != MODE_MOUSE:
                     if self._ctx.config.get("general_always_capture", False):
@@ -298,7 +306,10 @@ class SpotlightOverlayWindow(QWidget):
                 new_mode == MODE_SPOTLIGHT
                 and self._ctx.config["spotlight_background_mode"] == 0
             ):
-                self.capture_screenshot(fill_pixmap=False, generate_blurred=True)
+                self.capture_screenshot(
+                    fill_pixmap=False,
+                    blur_level=self._ctx.config["spotlight_background_blur_level"],
+                )
             if not self.auto_mode_enabled():
                 self.show_overlay()
 
@@ -385,9 +396,7 @@ class SpotlightOverlayWindow(QWidget):
             self.current_line_width = new_width
             self.update()  # atualiza a tela para refletir a mudança, se necessário
 
-    def capture_screenshot(
-        self, show_after=False, generate_blurred=False, fill_pixmap=True
-    ):
+    def capture_screenshot(self, show_after=False, fill_pixmap=True, blur_level=0):
         self._capturing_screenshot = True
         try:
             self.hide_overlay()
@@ -403,8 +412,8 @@ class SpotlightOverlayWindow(QWidget):
             # Atualiza o pixmap do overlay (converter QImage para QPixmap)
             if fill_pixmap:
                 self.pixmap = pixmap
-            if generate_blurred:
-                self.blurred_pixmap = apply_blur(pixmap)
+            if blur_level != 0:
+                self.blurred_pixmap = apply_blur(pixmap, blur_level)
 
             self._pixmap_cleared = False
 
@@ -450,7 +459,7 @@ class SpotlightOverlayWindow(QWidget):
         padded_pixmap = QPixmap(
             self.pixmap.width() + PADDING * 2, self.pixmap.height() + PADDING * 2
         )
-        padded_pixmap.fill(Qt.GlobalColor.transparent)
+        padded_pixmap.fill(Qt_Color_Transparent)
         painter_pad = QPainter(padded_pixmap)
         painter_pad.drawPixmap(PADDING, PADDING, self.pixmap)
         painter_pad.end()
@@ -671,9 +680,9 @@ class SpotlightOverlayWindow(QWidget):
             pen = QPen(
                 path["color"],
                 path["width"],
-                Qt.PenStyle.SolidLine,
-                Qt.PenCapStyle.RoundCap,
-                Qt.PenJoinStyle.RoundJoin,
+                Qt_SolidLine,
+                Qt_RoundCap,
+                Qt_PenJoinStyle_RoundJoin,
             )
             painter.setPen(pen)
             if len(path["points"]) > 1:
@@ -685,9 +694,9 @@ class SpotlightOverlayWindow(QWidget):
             pen = QPen(
                 self.pen_color,
                 self.current_line_width,
-                Qt.PenStyle.SolidLine,
-                Qt.PenCapStyle.RoundCap,
-                Qt.PenJoinStyle.RoundJoin,
+                Qt_SolidLine,
+                Qt_RoundCap,
+                Qt_PenJoinStyle_RoundJoin,
             )
             painter.setPen(pen)
             for i in range(len(self.current_path) - 1):
@@ -696,7 +705,7 @@ class SpotlightOverlayWindow(QWidget):
         cursor_pos = self.mapFromGlobal(QCursor.pos())
         brush = QBrush(self.pen_color)
         painter.setBrush(brush)
-        painter.setPen(QPen(Qt.PenStyle.NoPen))
+        painter.setPen(QPen(Qt_NoPen))
 
         self.draw_pen_tip(painter, cursor_pos, size=self.current_line_width * 4)
 
@@ -741,7 +750,7 @@ class SpotlightOverlayWindow(QWidget):
         path.closeSubpath()
 
         painter.setBrush(QBrush(self.pen_color))
-        painter.setPen(QPen(Qt.PenStyle.NoPen))
+        painter.setPen(QPen(Qt_NoPen))
 
         painter.drawPath(path)
 

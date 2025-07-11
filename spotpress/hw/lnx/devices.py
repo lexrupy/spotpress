@@ -12,8 +12,11 @@ from spotpress.hw.lnx.nordicasasmartcontrol import ASASmartControlPointer
 from spotpress.hw.lnx.virtualdevice import VirtualPointer
 
 
-# DEVICE_CLASSES = {BaseusOrangeDotAI, GenericVRBoxPointer, VirtualPointer}
-DEVICE_CLASSES = {BaseusOrangeDotAI, GenericVRBoxPointer, ASASmartControlPointer}
+DEVICE_CLASSES = {
+    BaseusOrangeDotAI,
+    GenericVRBoxPointer,
+    ASASmartControlPointer,
+}
 
 
 class DeviceMonitor(BaseDeviceMonitor):
@@ -149,6 +152,7 @@ class DeviceMonitor(BaseDeviceMonitor):
                 if cls.is_known_device(path):
                     devices.append((path, cls))
 
+        devices.append(("virtual", VirtualPointer))
         return devices
 
     def hotplug_callback(self, action, device):

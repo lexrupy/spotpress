@@ -72,7 +72,7 @@ class SpotpressPreferences(QMainWindow):
         if WINDOWS_OS:
             self.setMinimumSize(650, 760)
         else:
-            self.setMinimumSize(800, 680)
+            self.setMinimumSize(650, 703)
 
         self._ctx = AppContext(
             screen_index=0,
@@ -150,6 +150,10 @@ class SpotpressPreferences(QMainWindow):
         self.device_monitor.register_hotplug_callback(self.emit_refresh_devices_signal)
         self.refresh_devices_list()
         self.preferences_tab.update_modes_list_from_context()
+
+        # from spotpress.utils import set_debug_border
+        #
+        # set_debug_border(self)
 
     def center_on_screen(self):
         screen = QApplication.primaryScreen()
@@ -331,6 +335,11 @@ class SpotpressPreferences(QMainWindow):
         os.makedirs(os.path.dirname(CONFIG_PATH), exist_ok=True)
         with open(CONFIG_PATH, "w") as configfile:
             config.write(configfile)
+
+    def keyPressEvent(self, event):
+        key = event.key()
+        if key == Qt_Key_S:
+            self.show_overlay()
 
 
 if __name__ == "__main__":
