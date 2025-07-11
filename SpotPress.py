@@ -17,6 +17,7 @@ from spotpress.qtcompat import (
     QMainWindow,
     QIcon,
     QAction,
+    Qt_Key_S,
     Qt_WindowMinimizeButtonHint,
     QtItem_UserRole,
     pyqtSignal,

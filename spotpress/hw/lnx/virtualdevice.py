@@ -10,12 +10,7 @@ from spotpress.hw.lnx.pointerdevice import PointerDevice
 
 
 class VirtualPointer(PointerDevice):
-    VENDOR_ID = 0x0000
-    PRODUCT_ID = 0x0000
     PRODUCT_DESCRIPTION = "Virtual Pointer Device"
-    LONG_PRESS_INTERVAL = 0.6  # tempo mínimo para considerar pressionamento longo
-    DOUBLE_CLICK_INTERVAL = 0.4  # segundos
-    REPEAT_INTERVAL = 0.05
     IS_VIRTUAL = True
 
     def __init__(self, app_ctx, hidraw_path):
