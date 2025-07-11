@@ -66,14 +66,11 @@ class SpotpressPreferences(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Spotpress preferences dialog")
-        self.setGeometry(100, 100, 650, 550)
+        self.setGeometry(100, 100, 650, 700)
 
         # Quando fechar a janela, ao invés de fechar, esconder
         self.setWindowFlags(self.windowFlags() | Qt_WindowMinimizeButtonHint)
-        if WINDOWS_OS:
-            self.setMinimumSize(650, 760)
-        else:
-            self.setMinimumSize(650, 703)
+        self.setMinimumSize(650, 760)
 
         self._ctx = AppContext(
             screen_index=0,
