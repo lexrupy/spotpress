@@ -15,7 +15,9 @@ class PointerDevice(BasePointerDevice):
 
     def __init__(self, app_ctx, hidraw_path):
         self._is_virtual = False
+        self._thread_set = set()
         self.path = hidraw_path
+        self._monitor_lock = threading.Lock()
         self._stop_event_thread = threading.Event()
         self._stop_hidraw_thread = threading.Event()
         self._event_thread = None
@@ -36,8 +38,14 @@ class PointerDevice(BasePointerDevice):
         return self.__class__.IS_VIRTUAL
 
     def _start_thread(self, name, target):
+        if name in self._thread_set:
+            self._ctx.log(
+                f"* Tentativa de Criar Thread já existente com mesmo nome: {name}"
+            )
+            return
         t = threading.Thread(target=target, daemon=True, name=name)
         t.start()
+        self._thread_set.add(name)
         return t
 
     def start_event_blocking(self):
@@ -45,13 +53,9 @@ class PointerDevice(BasePointerDevice):
             self._stop_event_thread.clear()
             devs = self.find_all_event_devices_for_known()
             if devs:
-                self._start_thread("event_thread", lambda: self.read_input_events(devs))
-                # self._event_thread = threading.Thread(
-                #     target=self.read_input_events,
-                #     args=(devs,),
-                #     daemon=True,
-                # )
-                # self._event_thread.start()
+                self._event_thread = self._start_thread(
+                    "event_thread", lambda: self.read_input_events(devs)
+                )
             else:
                 self._ctx.log(
                     "* Nenhum dispositivo de entrada conhecido encontrado para bloquear."
@@ -129,25 +133,26 @@ class PointerDevice(BasePointerDevice):
         self.stop_hidraw_monitoring()
 
     def ensure_monitoring(self):
-        need_start = False
+        with self._monitor_lock:
+            need_start = False
 
-        if (
-            not hasattr(self, "_event_thread")
-            or not self._event_thread
-            or not self._event_thread.is_alive()
-        ):
-            need_start = True
+            if (
+                not hasattr(self, "_event_thread")
+                or not self._event_thread
+                or not self._event_thread.is_alive()
+            ):
+                need_start = True
 
-        if (
-            not hasattr(self, "_hidraw_thread")
-            or not self._hidraw_thread
-            or not self._hidraw_thread.is_alive()
-        ):
-            need_start = True
+            if (
+                not hasattr(self, "_hidraw_thread")
+                or not self._hidraw_thread
+                or not self._hidraw_thread.is_alive()
+            ):
+                need_start = True
 
-        if need_start:
-            self._ctx.log(f"* Monitorando {self.display_name()}")
-            self.monitor()
+            if need_start:
+                self._ctx.log(f"* Monitorando {self.display_name()}")
+                self.monitor()
 
     def known_path(self, path):
         return path is not None and path in self._known_paths
@@ -159,7 +164,6 @@ class PointerDevice(BasePointerDevice):
         self.cleanup_known_paths()
         if path and path not in self._known_paths and os.path.exists(path):
             self._known_paths.add(path)
-            self.ensure_monitoring()
             return True
         return False
 
@@ -282,7 +286,9 @@ class PointerDevice(BasePointerDevice):
                         pass
 
     def read_pacotes_completos(self, f):
-        raise NotImplementedError()
+        # raise NotImplementedError()
+        yield []
 
     def processa_pacote_hid(self, data):
-        raise NotImplementedError()
+        # raise NotImplementedError()
+        pass

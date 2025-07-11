@@ -85,7 +85,7 @@ class DeviceMonitor(BaseDeviceMonitor):
                     self._ctx.log(
                         f"* Ativando: {device.__class__.__name__} ({device._known_paths})"
                     )
-                    device.ensure_monitoring()
+                    # device.ensure_monitoring()
                     self._ctx.set_active_device(device)
                     self._ctx.compatible_modes = sorted(
                         getattr(device, "compatible_modes", [])

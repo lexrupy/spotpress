@@ -263,10 +263,10 @@ class SpotpressPreferences(QMainWindow):
         self.activateWindow()
 
     def show_about(self):
-        for dev in self.device_monitor.get_monitored_devices():
-            print(
-                f"{dev}: monitoring event = {dev._event_thread.is_alive() if dev._event_thread else False}, hidraw = {dev._hidraw_thread.is_alive() if dev._hidraw_thread else False}"
-            )
+        # for dev in self.device_monitor.get_monitored_devices():
+        #     print(
+        #         f"{dev}: monitoring event = {dev._event_thread.is_alive() if dev._event_thread else False}, hidraw = {dev._hidraw_thread.is_alive() if dev._hidraw_thread else False}"
+        #     )
         msg = QMessageBox(self)
         msg.setWindowTitle("About SpotPress...")
         msg.setText(
