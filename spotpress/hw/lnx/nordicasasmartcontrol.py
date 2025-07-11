@@ -2,6 +2,7 @@ import time
 import uinput
 import threading
 import os
+import select
 import evdev.ecodes as ec
 
 from spotpress.qtcompat import QTimer
@@ -142,55 +143,50 @@ class ASASmartControlPointer(PointerDevice):
             self._auto_mode_timer.cancel()
             self._auto_mode_timer = None
 
-    def start_hidraw_monitoring(self):
-        if self._hidraw_thread and self._hidraw_thread.is_alive():
-            return
-
-        def run():
-            try:
-                if os.path.exists(self.path):
-                    with open(self.path, "rb") as f:
-                        for pacote in self.read_pacotes_completos(f):
-                            self.processa_pacote_hid(pacote)
-            except PermissionError:
-                self._ctx.log(
-                    f"* Sem permissão para acessar {self.path} (tente ajustar udev ou rodar com sudo)"
-                )
-            except KeyboardInterrupt:
-                self._ctx.log(f"\nFinalizando monitoramento de {self.path}")
-            except OSError as e:
-                if e.errno == 5:  # Input/output error
-                    self._ctx.log("- Dispositivo desconectado ou erro de I/O")
-                else:
-                    self._ctx.log(f"* Erro em {self.path}: {e}")
-
-            except Exception as e:
-                self._ctx.log(f"*  Erro em {self.path}: {e}")
-
-        # self._hidraw_thread = threading.Thread(target=run, daemon=True).start()
-        self._hidraw_thread = threading.Thread(target=run, daemon=True)
-        self._hidraw_thread.start()
-
     def stop_hidraw_monitoring(self):
-        self._stop_hidraw_event.set()
+        self._stop_hidraw_thread.set()
         if self._hidraw_thread and self._hidraw_thread.is_alive():
-            self._stop_hidraw_event.set()
+            self._stop_hidraw_thread.set()
             self._hidraw_thread.join(
                 timeout=1
             )  # espera a thread encerrar (timeout opcional)
 
     def read_pacotes_completos(self, f):
+        fd = f.fileno()
+        # Coloca o fd em não bloqueante
+        os.set_blocking(fd, False)
+
         try:
-            while not self._stop_event.is_set():
-                b = f.read(8)
-                if not b:
-                    # time.sleep(0.01)
-                    break
-                yield bytes(b)
+            while not self._stop_hidraw_thread.is_set():
+                rlist, _, _ = select.select([fd], [], [], 0.1)
+                if fd in rlist:
+                    b = f.read(8)
+                    if not b:
+                        # EOF ou dispositivo desconectado
+                        break
+                    if len(b) == 8:
+                        yield bytes(b)
+                else:
+                    # Timeout, permite checar stop event
+                    continue
+
         except OSError as e:
             self._ctx.log(f"[ERRO] Falha ao ler do device: {e}")
         except Exception as e:
             self._ctx.log(f"[ERRO] Exceção inesperada: {e}")
+
+    # def read_pacotes_completos(self, f):
+    #     try:
+    #         while not self._stop_hidraw_event.is_set():
+    #             b = f.read(8)
+    #             if not b:
+    #                 # time.sleep(0.01)
+    #                 break
+    #             yield bytes(b)
+    #     except OSError as e:
+    #         self._ctx.log(f"[ERRO] Falha ao ler do device: {e}")
+    #     except Exception as e:
+    #         self._ctx.log(f"[ERRO] Exceção inesperada: {e}")
 
     def processa_pacote_hid(self, data):
 

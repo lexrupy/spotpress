@@ -15,6 +15,7 @@ class AppContext(QObject):
         show_info_function=None,
         show_overlay_function=None,
         hide_overlay_function=None,
+        active_device_changed_function=None,
         main_window=None,
     ):
         super().__init__()
@@ -25,6 +26,7 @@ class AppContext(QObject):
         self._show_info_function = show_info_function
         self._show_overlay_function = show_overlay_function
         self._hide_overlay_function = hide_overlay_function
+        self._active_device_changed_function = active_device_changed_function
         self._compatible_modes = []
         self._config = ObservableDict(callback=self._on_config_changed)
         self._support_auto_mode = False
@@ -37,6 +39,14 @@ class AppContext(QObject):
         self._device_monitor = None
 
         self.configChanged.connect(self._on_config_changed_signal)
+
+    @property
+    def active_device_changed_function(self):
+        return self._active_device_changed_function
+
+    @active_device_changed_function.setter
+    def active_device_changed_function(self, func):
+        self._active_device_changed_function = func
 
     @property
     def device_monitor(self):
@@ -247,6 +257,8 @@ class AppContext(QObject):
         if device:
             device.ensure_monitoring()
             self.compatible_modes = sorted(getattr(device._ctx, "compatible_modes", []))
+            if self._active_device_changed_function is not None:
+                self._active_device_changed_function(device)
         else:
             self.compatible_modes = []
 

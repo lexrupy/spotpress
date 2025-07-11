@@ -58,7 +58,8 @@ class DeviceMonitor(BaseDeviceMonitor):
                 self.add_monitored_device(cls, path)
         else:
             self._ctx.log("* Nenhum dispositivo compatível encontrado.")
-        if len(self._monitored_devices) == 1:
+        # if len(self._monitored_devices) == 1:
+        if self._ctx.active_device is None and self._monitored_devices:
             dev = next(iter(self._monitored_devices.values()))
             self.set_active_device(dev)
 
@@ -104,15 +105,29 @@ class DeviceMonitor(BaseDeviceMonitor):
             dev.add_known_path(path)
             # dev.ensure_monitoring()
             self._ctx.log(f"{cls.__name__} já conhecido. Adicionando novo path: {path}")
+
+        if len(self._monitored_devices) > 1:
+            if VirtualPointer in self._monitored_devices:
+                del self._monitored_devices[VirtualPointer]
         self._notify_callbacks()
 
     def remove_monitored_device(self, dev):
+        do_activate = dev == self._ctx.active_device
         # Encontra a classe correspondente à instância
         for cls, inst in list(self._monitored_devices.items()):
             if inst is dev:
                 inst.stop()
                 del self._monitored_devices[cls]
                 break
+
+        if len(self._monitored_devices) == 0:
+            self.add_monitored_device(VirtualPointer, "virtual")
+
+        # Ativa outo dispositivo se o removido era o ativo
+        if do_activate:
+            dev = next(iter(self._monitored_devices.values()))
+            self.set_active_device(dev)
+
         self._notify_callbacks()
 
     def remove_monitored_device_path(self, path):
@@ -152,7 +167,8 @@ class DeviceMonitor(BaseDeviceMonitor):
                 if cls.is_known_device(path):
                     devices.append((path, cls))
 
-        devices.append(("virtual", VirtualPointer))
+        if len(devices) == 0:
+            devices.append(("virtual", VirtualPointer))
         return devices
 
     def hotplug_callback(self, action, device):

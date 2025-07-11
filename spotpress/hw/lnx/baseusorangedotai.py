@@ -1,6 +1,7 @@
 import time
 import uinput
 import threading
+import select
 import os
 import evdev.ecodes as ec
 
@@ -271,60 +272,54 @@ class BaseusOrangeDotAI(PointerDevice):
             t.cancel()
         self._pending_click_timers.clear()
 
-    def start_hidraw_monitoring(self):
-        if self._hidraw_thread and self._hidraw_thread.is_alive():
-            return
-        # time.sleep(0.8)
-
-        def run():
-            try:
-                if os.path.exists(self.path):
-                    with open(self.path, "rb") as f:
-                        for pacote in self.read_pacotes_completos(f):
-                            self.processa_pacote_hid(pacote)
-            except PermissionError:
-                self._ctx.log(
-                    f"* Sem permissão para acessar {self.path} (tente ajustar udev ou rodar com sudo)"
-                )
-            except KeyboardInterrupt:
-                self._ctx.log(f"\nFinalizando monitoramento de {self.path}")
-            except OSError as e:
-                if e.errno == 5:  # Input/output error
-                    self._ctx.log("- Dispositivo desconectado ou erro de I/O")
-                else:
-                    self._ctx.log(f"* Erro em {self.path}: {e}")
-
-            except Exception as e:
-                self._ctx.log(f"*  Erro em {self.path}: {e}")
-
-        # self._hidraw_thread = threading.Thread(target=run, daemon=True).start()
-        self._hidraw_thread = threading.Thread(target=run, daemon=True)
-        self._hidraw_thread.start()
-
     def stop_hidraw_monitoring(self):
-        self._stop_hidraw_event.set()
+        self._stop_hidraw_thread.set()
         if self._hidraw_thread and self._hidraw_thread.is_alive():
-            self._stop_hidraw_event.set()
+            self._stop_hidraw_thread.set()
             self._hidraw_thread.join(
                 timeout=1
             )  # espera a thread encerrar (timeout opcional)
 
     def read_pacotes_completos(self, f):
+        fd = f.fileno()
+        os.set_blocking(fd, False)
         buffer = bytearray()
         try:
-            while not self._stop_event.is_set():
-                b = f.read(1)
-                if not b:
-                    time.sleep(0.01)
-                    break
-                buffer += b
-                if b[0] == 182:
-                    yield bytes(buffer)
-                    buffer.clear()
+            while not self._stop_hidraw_thread.is_set():
+                rlist, _, _ = select.select([fd], [], [], 0.1)
+                if fd in rlist:
+                    b = f.read(1)
+                    if not b:
+                        time.sleep(0.01)
+                        break
+                    buffer += b
+                    if b[0] == 182:
+                        yield bytes(buffer)
+                        buffer.clear()
+                else:
+                    # Timeout para checar stop event
+                    continue
         except OSError as e:
             self._ctx.log(f"[ERRO] Falha ao ler do device: {e}")
         except Exception as e:
             self._ctx.log(f"[ERRO] Exceção inesperada: {e}")
+
+    # def read_pacotes_completos(self, f):
+    #     buffer = bytearray()
+    #     try:
+    #         while not self._stop_hidraw_event.is_set():
+    #             b = f.read(1)
+    #             if not b:
+    #                 time.sleep(0.01)
+    #                 break
+    #             buffer += b
+    #             if b[0] == 182:
+    #                 yield bytes(buffer)
+    #                 buffer.clear()
+    #     except OSError as e:
+    #         self._ctx.log(f"[ERRO] Falha ao ler do device: {e}")
+    #     except Exception as e:
+    #         self._ctx.log(f"[ERRO] Exceção inesperada: {e}")
 
     def processa_pacote_hid(self, data):
 

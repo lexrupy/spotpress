@@ -18,11 +18,14 @@ from spotpress.qtcompat import (
 
 class DevicesTab(QWidget):
     screen_changed = pyqtSignal(int)
+    active_device_changed = pyqtSignal(object)
 
     def __init__(self, parent, ctx):
         super().__init__(parent)
         self._ctx = ctx
         self.init_ui()
+        self.active_device_changed.connect(self.select_device_on_list)
+        self._ctx.active_device_changed_function = self.tread_safe_device_changed
 
     def init_ui(self):
         layout = QVBoxLayout()
@@ -76,7 +79,6 @@ class DevicesTab(QWidget):
 
     def change_device(self, dev):
         self._ctx.device_monitor.set_active_device(dev)
-        # self._ctx.set_active_device(dev)
 
     def on_device_selected(self, current, previous):
         if current:
@@ -86,3 +88,14 @@ class DevicesTab(QWidget):
         else:
             self._ctx.set_active_device(None)
             self._ctx.main_window.preferences_tab.update_modes_list_from_context()
+
+    def select_device_on_list(self, device):
+        for i in range(self.devices_list.count()):
+            item = self.devices_list.item(i)
+            dev = item.data(QtItem_UserRole)
+            if dev == device:
+                self.devices_list.setCurrentItem(item)
+                break
+
+    def tread_safe_device_changed(self, device):
+        self.active_device_changed.emit(device)

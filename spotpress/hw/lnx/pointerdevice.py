@@ -7,18 +7,6 @@ import evdev
 
 from spotpress.hw.base_pointer_device import BasePointerDevice
 
-# from spotpress.qtcompat import pyqtSlot, QObject
-#
-#
-# class ActionInvoker(QObject):
-#     def __init__(self, callback):
-#         super().__init__()
-#         self._callback = callback
-#
-#     @pyqtSlot(str)
-#     def invoke(self, action: str):
-#         self._callback(action)
-
 
 class PointerDevice(BasePointerDevice):
     VENDOR_ID = None
@@ -28,8 +16,8 @@ class PointerDevice(BasePointerDevice):
     def __init__(self, app_ctx, hidraw_path):
         self._is_virtual = False
         self.path = hidraw_path
-        self._stop_event = threading.Event()
-        self._stop_hidraw_event = threading.Event()
+        self._stop_event_thread = threading.Event()
+        self._stop_hidraw_thread = threading.Event()
         self._event_thread = None
         self._hidraw_thread = None
         self._ctx = app_ctx
@@ -47,17 +35,23 @@ class PointerDevice(BasePointerDevice):
     def is_virtual_device(self):
         return self.__class__.IS_VIRTUAL
 
+    def _start_thread(self, name, target):
+        t = threading.Thread(target=target, daemon=True, name=name)
+        t.start()
+        return t
+
     def start_event_blocking(self):
         if not self._event_thread or not self._event_thread.is_alive():
-            self._stop_event.clear()
+            self._stop_event_thread.clear()
             devs = self.find_all_event_devices_for_known()
             if devs:
-                self._event_thread = threading.Thread(
-                    target=self.read_input_events,
-                    args=(devs,),
-                    daemon=True,
-                )
-                self._event_thread.start()
+                self._start_thread("event_thread", lambda: self.read_input_events(devs))
+                # self._event_thread = threading.Thread(
+                #     target=self.read_input_events,
+                #     args=(devs,),
+                #     daemon=True,
+                # )
+                # self._event_thread.start()
             else:
                 self._ctx.log(
                     "* Nenhum dispositivo de entrada conhecido encontrado para bloquear."
@@ -79,28 +73,79 @@ class PointerDevice(BasePointerDevice):
         self.start_hidraw_monitoring()
 
     def start_hidraw_monitoring(self):
-        pass
+        if self._hidraw_thread and self._hidraw_thread.is_alive():
+            return
+
+        self._stop_hidraw_thread.clear()
+
+        def run():
+            self._ctx.log(
+                f"[{self.__class__.__name__}] Iniciando monitoramento de hidraw ({self.path})"
+            )
+            try:
+                if os.path.exists(self.path):
+                    with open(self.path, "rb") as f:
+                        # fd = f.fileno()
+                        # os.set_blocking(fd, False)
+                        for pacote in self.read_pacotes_completos(f):
+                            self.processa_pacote_hid(pacote)
+            except PermissionError:
+                self._ctx.log(
+                    f"* Sem permissão para acessar {self.path} (tente ajustar udev ou rodar com sudo)"
+                )
+            except KeyboardInterrupt:
+                self._ctx.log(f"\nFinalizando monitoramento de {self.path}")
+            except OSError as e:
+                if e.errno == 5:  # Input/output error
+                    self._ctx.log("- Dispositivo desconectado ou erro de I/O")
+                else:
+                    self._ctx.log(f"* Erro em {self.path}: {e}")
+
+            except Exception as e:
+                self._ctx.log(f"*  Erro em {self.path}: {e}")
+            self._ctx.log(
+                f"[{self.__class__.__name__}] Finalizou thread hidraw ({self.path})"
+            )
+
+        # self._hidraw_thread = threading.Thread(target=run, daemon=True).start()
+        # self._hidraw_thread = threading.Thread(target=run, daemon=True)
+        # self._hidraw_thread.start()
+        self._hidraw_thread = self._start_thread("hidraw_thread", run)
 
     def stop_hidraw_monitoring(self):
-        self._stop_hidraw_event.set()
+        self._stop_hidraw_thread.set()
+        if self._hidraw_thread and self._hidraw_thread.is_alive():
+            self._hidraw_thread.join(timeout=1)
+        self._hidraw_thread = None
 
     def stop_event_blocking(self):
-        self._stop_event.set()
+        self._stop_event_thread.set()
         if self._event_thread and self._event_thread.is_alive():
-            self._event_thread.join(
-                timeout=1
-            )  # espera a thread encerrar (timeout opcional)
+            self._event_thread.join(timeout=1)
+        self._event_thread = None
 
     def stop(self):
         self.stop_event_blocking()
         self.stop_hidraw_monitoring()
 
     def ensure_monitoring(self):
+        need_start = False
+
         if (
             not hasattr(self, "_event_thread")
             or not self._event_thread
             or not self._event_thread.is_alive()
         ):
+            need_start = True
+
+        if (
+            not hasattr(self, "_hidraw_thread")
+            or not self._hidraw_thread
+            or not self._hidraw_thread.is_alive()
+        ):
+            need_start = True
+
+        if need_start:
             self._ctx.log(f"* Monitorando {self.display_name()}")
             self.monitor()
 
@@ -184,7 +229,7 @@ class PointerDevice(BasePointerDevice):
         pass
 
     def read_input_events(self, devices):
-        while not self._stop_event.is_set():
+        while not self._stop_event_thread.is_set():
             fd_para_dev = {}
             for dev in devices:
                 try:
@@ -198,7 +243,7 @@ class PointerDevice(BasePointerDevice):
             self._ctx.log("* Monitorando dispositivos...")
 
             try:
-                while True:
+                while not self._stop_event_thread.is_set():
                     r, _, _ = select.select(fd_para_dev, [], [], 0.1)
                     for fd in r:
                         dev = fd_para_dev.get(fd)
@@ -232,5 +277,12 @@ class PointerDevice(BasePointerDevice):
                 for dev in devices:
                     try:
                         dev.ungrab()
+                        dev.close()
                     except Exception:
                         pass
+
+    def read_pacotes_completos(self, f):
+        raise NotImplementedError()
+
+    def processa_pacote_hid(self, data):
+        raise NotImplementedError()

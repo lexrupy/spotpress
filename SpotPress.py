@@ -174,20 +174,44 @@ class SpotpressPreferences(QMainWindow):
                 self.activateWindow()
 
     def refresh_devices_list(self):
-        self.devices_tab.devices_list.clear()
-        devices = self.device_monitor.get_monitored_devices()
-        if not devices:
-            self.devices_tab.devices_list.addItem("Nenhum dispositivo monitorado")
-            self.devices_tab.devices_list.setEnabled(False)
-            return
+        self.devices_tab.devices_list.blockSignals(True)
+        try:
+            devices = self.device_monitor.get_monitored_devices()
+            current_items = {}
 
-        self.devices_tab.devices_list.setEnabled(True)
-        for dev in devices:
-            item = QListWidgetItem(dev.display_name())
-            item.setData(QtItem_UserRole, dev)
-            self.devices_tab.devices_list.addItem(item)
+            # Mapear dispositivos atualmente na lista
+            for i in range(self.devices_tab.devices_list.count()):
+                item = self.devices_tab.devices_list.item(i)
+                dev = item.data(QtItem_UserRole)
+                if dev:
+                    current_items[dev] = item
 
-        self.preferences_tab.update_modes_list_from_context()
+            new_devices = set(devices)
+            old_devices = set(current_items.keys())
+
+            # Remover itens que não estão mais presentes
+            for dev in old_devices - new_devices:
+                item = current_items[dev]
+                row = self.devices_tab.devices_list.row(item)
+                self.devices_tab.devices_list.takeItem(row)
+
+            # Adicionar novos dispositivos que ainda não estão na lista
+            for dev in new_devices - old_devices:
+                item = QListWidgetItem(dev.display_name())
+                item.setData(QtItem_UserRole, dev)
+                self.devices_tab.devices_list.addItem(item)
+
+            # Atualiza o modo se necessário
+            self.preferences_tab.update_modes_list_from_context()
+
+            # Re-seleciona o dispositivo ativo
+            active_dev = self._ctx.active_device
+            self.devices_tab.select_device_on_list(active_dev)
+
+            self.devices_tab.devices_list.setEnabled(bool(devices))
+
+        finally:
+            self.devices_tab.devices_list.blockSignals(False)
 
     def create_tray_icon(self):
         icon = QIcon("spotpress.png")
@@ -239,11 +263,16 @@ class SpotpressPreferences(QMainWindow):
         self.activateWindow()
 
     def show_about(self):
+        for dev in self.device_monitor.get_monitored_devices():
+            print(
+                f"{dev}: monitoring event = {dev._event_thread.is_alive() if dev._event_thread else False}, hidraw = {dev._hidraw_thread.is_alive() if dev._hidraw_thread else False}"
+            )
         msg = QMessageBox(self)
         msg.setWindowTitle("About SpotPress...")
         msg.setText(
             "SpotPress: A Spotlight Aplication For Presentations.\n"
             f"Powered By PyQT{SP_QT_VERSION}\n"
+            f"Active Device: {self._ctx.active_device}\n"
             "Licenced under LGPL\nContributors:\nAlexandre da Silva <lexrupy>"
         )
 
