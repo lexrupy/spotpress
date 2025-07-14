@@ -16,6 +16,8 @@ class VirtualPointer(PointerDevice):
     def __init__(self, app_ctx, hidraw_path):
         super().__init__(app_ctx=app_ctx, hidraw_path=hidraw_path)
 
+        self._known_paths.add("virtual")
+
         self.compatible_modes = [
             MODE_MOUSE,
             MODE_SPOTLIGHT,
@@ -39,3 +41,6 @@ class VirtualPointer(PointerDevice):
 
     def remove_known_path(self, path):
         return True
+
+    def find_all_event_devices_for_known(self):
+        return []
