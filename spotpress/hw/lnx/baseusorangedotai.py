@@ -21,7 +21,7 @@ class BaseusOrangeDotAI(PointerDevice):
     PRODUCT_DESCRIPTION = "Baseus Orange Dot AI Wireless Presenter"
     DOUBLE_CLICK_INTERVAL = 0.4
     LONG_PRESS_INTERVAL = 0.6
-    REPEAT_INTERVAL = 0.05
+    REPEAT_INTERVAL = 0.10
 
     def __init__(self, app_ctx, hidraw_path):
         super().__init__(app_ctx=app_ctx, hidraw_path=hidraw_path)
@@ -283,21 +283,18 @@ class BaseusOrangeDotAI(PointerDevice):
     def read_pacotes_completos(self, f):
         fd = f.fileno()
         os.set_blocking(fd, False)
-        buffer = bytearray()
         try:
             while not self._stop_hidraw_thread.is_set():
                 rlist, _, _ = select.select([fd], [], [], 0.1)
                 if fd in rlist:
-                    b = f.read(1)
+                    b = f.read(16)
                     if not b:
-                        time.sleep(0.01)
+                        # EOF ou dispositivo desconectado
                         break
-                    buffer += b
-                    if b[0] == 182:
-                        yield bytes(buffer)
-                        buffer.clear()
+                    if len(b) == 16:
+                        yield bytes(b)
                 else:
-                    # Timeout para checar stop event
+                    # Timeout, permite checar stop event
                     continue
         except OSError as e:
             self._ctx.log(f"[ERRO] Falha ao ler do device: {e}")
@@ -514,12 +511,15 @@ class BaseusOrangeDotAI(PointerDevice):
                     # | ec.KEY_ESC
                     # | ec.KEY_TAB
                     # | ec.BTN_RIGHT
-                    # | ec.BTN_LEFT
+                    | ec.BTN_LEFT
                 ):
                     if ow and ow.is_overlay_actually_visible():
-                        pass
+                        if (
+                            event.code == ec.BTN_LEFT
+                            and self._ctx.current_mode == MODE_PEN
+                        ):
+                            self._ctx.ui.emit((event.type, event.code), event.value)
                     else:
-
                         # Emit if overlay is not visible
                         self._ctx.ui.emit((event.type, event.code), event.value)
                 case ec.KEY_E:
