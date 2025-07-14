@@ -37,6 +37,8 @@ from spotpress.ui.log_tab import LogTab
 
 CONFIG_PATH = os.path.expanduser("~/.config/spotpress/config.ini")
 
+ICON_FILE = os.path.join(os.path.dirname(os.path.realpath(__file__)), "spotpress.png")
+
 WINDOWS_OS = False
 
 if sys.platform.startswith("win"):
@@ -157,11 +159,6 @@ class SpotpressPreferences(QMainWindow):
         if screen:
             geometry = screen.availableGeometry()
             self.move(geometry.center() - self.rect().center())  # pyright: ignore
-        # screen_geometry = QDesktopWidget().availableGeometry()
-        # screen_center_point = screen_geometry.center()
-        # qt_rectangle = self.frameGeometry()
-        # qt_rectangle.moveCenter(screen_center_point)
-        # self.move(qt_rectangle.topLeft())
 
     def on_tray_icon_activated(self, reason):
         if reason == QSystemTrayIcon_Trigger:
@@ -181,7 +178,7 @@ class SpotpressPreferences(QMainWindow):
             # Mapear dispositivos atualmente na lista
             for i in range(self.devices_tab.devices_list.count()):
                 item = self.devices_tab.devices_list.item(i)
-                dev = item.data(QtItem_UserRole)
+                dev = item.data(QtItem_UserRole)  # pyright: ignore
                 if dev:
                     current_items[dev] = item
 
@@ -213,7 +210,7 @@ class SpotpressPreferences(QMainWindow):
             self.devices_tab.devices_list.blockSignals(False)
 
     def create_tray_icon(self):
-        icon = QIcon("spotpress.png")
+        icon = QIcon(ICON_FILE)
         self.tray_icon = QSystemTrayIcon(icon, self)
 
         menu = QMenu()
@@ -275,7 +272,7 @@ class SpotpressPreferences(QMainWindow):
             "Licenced under LGPL\nContributors:\nAlexandre da Silva <lexrupy>"
         )
 
-        pixmap = QPixmap("spotpress.png")  # PNG já com o tamanho ideal
+        pixmap = QPixmap(ICON_FILE)  # PNG já com o tamanho ideal
         msg.setIconPixmap(pixmap)
 
         msg.exec()
@@ -371,7 +368,7 @@ class SpotpressPreferences(QMainWindow):
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     app.setApplicationName("SpotPress")
-    app.setWindowIcon(QIcon("spotpress.png"))
+    app.setWindowIcon(QIcon(ICON_FILE))
     load_dark_theme(app)
     window = SpotpressPreferences()
     window.show()

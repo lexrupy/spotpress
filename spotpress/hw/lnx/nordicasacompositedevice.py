@@ -132,23 +132,6 @@ class ASACompositeDevicePointer(PointerDevice):
         )
         self._auto_mode_timer.start()
 
-    def stop(self):
-        super().stop()
-        for t in self._pending_click_timers.values():
-            t.cancel()
-        self._pending_click_timers.clear()
-        if self._auto_mode_timer:
-            self._auto_mode_timer.cancel()
-            self._auto_mode_timer = None
-
-    def stop_hidraw_monitoring(self):
-        self._stop_hidraw_thread.set()
-        if self._hidraw_thread and self._hidraw_thread.is_alive():
-            self._stop_hidraw_thread.set()
-            self._hidraw_thread.join(
-                timeout=1
-            )  # espera a thread encerrar (timeout opcional)
-
     def read_pacotes_completos(self, f):
         fd = f.fileno()
         # Coloca o fd em não bloqueante
@@ -205,6 +188,10 @@ class ASACompositeDevicePointer(PointerDevice):
         self._on_button_press(button)
 
     def executa_acao(self, button):
+        if self._ctx.active_device != self:
+            return
+
+        return
         ow = self._ctx.overlay_window
         current_mode = self._ctx.current_mode
         normal_mode = current_mode == MODE_MOUSE or ow.is_overlay_actually_visible()
@@ -290,14 +277,6 @@ class ASACompositeDevicePointer(PointerDevice):
             return 'attrs{binterfaceprotocol}=="01"' in udevadm_output
         return True
 
-    def log_key(self, ev):
-        all_keys = ec.KEY | ec.BTN
-        if ev.value == 1:
-            direction = "down"
-        else:
-            direction = "up"
-        self.log(f"{all_keys[ev.code]} - {direction}")
-
     def _verifica_direcao_gestos(self):
         if len(self._rel_x_buffer) == self._rel_buffer_size:
             esquerda = sum(1 for v in self._rel_x_buffer if v < 0)
@@ -332,10 +311,15 @@ class ASACompositeDevicePointer(PointerDevice):
                 return
 
     def handle_event(self, event):
+        if self._ctx.active_device != self:
+            return
+
+        return
+
         ow = self._ctx.overlay_window
         if event.type == ec.EV_REL:  # Movimento de Mouse
             self._last_movement_time = time.time()
-            self._reset_auto_mode_timer()
+            # self._reset_auto_mode_timer()
             if self._is_mouse_down:
                 if event.code == ec.REL_X:
                     self._rel_x_buffer.append(event.value)
@@ -357,7 +341,7 @@ class ASACompositeDevicePointer(PointerDevice):
         elif event.type == ec.EV_KEY:
             self.log_key(event)
             self._last_movement_time = time.time()
-            self._reset_auto_mode_timer()
+            # self._reset_auto_mode_timer()
             match event.code:
                 case ec.BTN_LEFT:
                     if self._ctx.current_mode == MODE_MOUSE:
