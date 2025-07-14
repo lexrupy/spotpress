@@ -28,9 +28,7 @@ from spotpress.qtcompat import (
 from spotpress.appcontext import AppContext
 from spotpress.spotlight import SpotlightOverlayWindow
 from spotpress.infoverlay import InfOverlayWindow
-from spotpress.utils import (
-    get_screen_geometry,
-)
+from spotpress.utils import get_screen_geometry, load_dark_theme
 from spotpress.ui.preferences_tab import PreferencesTab
 from spotpress.ui.devices_tab import DevicesTab
 from spotpress.ui.log_tab import LogTab
@@ -373,6 +371,7 @@ if __name__ == "__main__":
     app = QApplication(sys.argv)
     app.setApplicationName("SpotPress")
     app.setWindowIcon(QIcon("spotpress.png"))
+    load_dark_theme(app)
     window = SpotpressPreferences()
     window.show()
     sys.exit(app.exec())

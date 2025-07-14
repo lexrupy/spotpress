@@ -22,6 +22,7 @@ from spotpress.qtcompat import (
     Qt_BlankCursor,
     Qt_BrushStyle_NoBrush,
     Qt_Color_Transparent,
+    Qt_Control_Modifier,
     Qt_Event_KeyPress,
     Qt_Key_Escape,
     Qt_Key_M,
@@ -45,6 +46,7 @@ from .utils import (
     MODE_MAP,
     PEN_COLORS,
     SHADE_COLORS,
+    Mode,
     apply_blur,
     capture_monitor_screenshot,
     MODE_SPOTLIGHT,
@@ -167,7 +169,7 @@ class SpotlightOverlayWindow(QWidget):
         self.blurred_pixmap.fill(Qt_Color_Transparent)
         self._pixmap_cleared = True
 
-    def change_overlay_color(self, dir=1):
+    def next_overlay_color(self, dir=1):
         new_index = self._ctx.config["shade_color_index"] + dir
         if new_index > len(SHADE_COLORS) - 1:
             new_index = 0
@@ -817,6 +819,31 @@ class SpotlightOverlayWindow(QWidget):
 
     def closeEvent(self, event):
         event.accept()
+
+    def wheelEvent(self, event):
+        delta_y = event.angleDelta().y()
+        _control = event.modifiers() == Qt_Control_Modifier
+
+        if delta_y > 0:
+            direction = 1
+        elif delta_y < 0:
+            direction = -1
+
+        if self._ctx.current_mode == MODE_LASER:
+            if _control:
+                self.next_laser_color(direction)
+            else:
+                self.change_laser_size(direction)
+        elif self._ctx.current_mode == MODE_PEN:
+            if _control:
+                self.change_line_width(direction)
+            else:
+                self.next_pen_color(direction)
+        elif self._ctx.current_mode == MODE_SPOTLIGHT:
+            if _control:
+                self.next_overlay_color(direction)
+            else:
+                self.change_spot_radius(direction)
 
     def quit(self):
         self.set_mouse_mode()

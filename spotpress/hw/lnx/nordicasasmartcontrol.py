@@ -269,7 +269,7 @@ class ASASmartControlPointer(PointerDevice):
                         now = time.time()
                         if now - self._last_overlay_color_change > 1.2:
                             self._last_overlay_color_change = now
-                            ow.change_overlay_color(-1)
+                            ow.next_overlay_color(-1)
             case "G_RIGHT":
                 if ow.is_overlay_actually_visible():
                     if current_mode == MODE_MAG_GLASS:
@@ -280,7 +280,7 @@ class ASASmartControlPointer(PointerDevice):
                         now = time.time()
                         if now - self._last_overlay_color_change > 1.2:
                             self._last_overlay_color_change = now
-                            ow.change_overlay_color()
+                            ow.next_overlay_color()
             case "HGL+hold":
                 if ow.is_overlay_actually_visible():
                     pass

@@ -407,7 +407,7 @@ class BaseusOrangeDotAI(PointerDevice):
                     elif current_mode == MODE_PEN:
                         ow.next_pen_color(+1)
                     elif current_mode == MODE_SPOTLIGHT:
-                        ow.change_overlay_color()
+                        ow.next_overlay_color()
             case "MIC++":
                 pass
             case "MIC+hold":
@@ -424,7 +424,7 @@ class BaseusOrangeDotAI(PointerDevice):
                     elif current_mode == MODE_PEN:
                         ow.next_pen_color(-1)
                     elif current_mode == MODE_SPOTLIGHT:
-                        ow.change_overlay_color()
+                        ow.next_overlay_color()
             case "LNG++":
                 pass
             case "LNG+hold":

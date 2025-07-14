@@ -1,4 +1,3 @@
-# import mss
 from spotpress.qtcompat import (
     QColor,
     QImage,
@@ -11,6 +10,16 @@ from spotpress.qtcompat import (
     QGraphicsBlurEffect,
     Qt_Color_Transparent,
 )
+
+import enum
+
+
+try:
+    import qdarktheme
+
+    DARK_MODE_AVAILABLE = True
+except:
+    DARK_MODE_AVAILABLE = False
 
 
 MODE_MOUSE = 0
@@ -27,6 +36,14 @@ MODE_MAP = {
     MODE_PEN: "Marcador",
     MODE_MAG_GLASS: "Lente",
 }
+
+
+class Mode(enum.Enum):
+    MOUSE = MODE_MOUSE
+    SPOTLIGHT = MODE_SPOTLIGHT
+    LASER = MODE_LASER
+    MAG_GLASS = MODE_MAG_GLASS
+    PEN = MODE_PEN
 
 
 LASER_COLORS = [
@@ -145,3 +162,8 @@ def capture_monitor_screenshot(screen_index):
     screen, _ = get_screen_and_geometry(screen_index)
     screenshot = screen.grabWindow(0)  # pyright: ignore
     return screenshot.toImage()
+
+
+def load_dark_theme(app):
+    if DARK_MODE_AVAILABLE:
+        app.setStyleSheet(qdarktheme.load_stylesheet())

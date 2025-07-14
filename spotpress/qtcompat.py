@@ -102,6 +102,7 @@ try:
     Qt_Key_Shift = Qt.Key.Key_Shift
     Qt_Key_Escape = Qt.Key.Key_Escape
     Qt_Key_Return = Qt.Key.Key_Return
+    Qt_Control_Modifier = Qt.KeyboardModifier.ControlModifier
 
     Qt_Event_KeyPress = QEvent.Type.KeyPress
 
@@ -270,6 +271,7 @@ except ImportError:
     Qt_Key_PageDown = Qt.Key_PageDown
     Qt_Key_Shift = Qt.Key_Shift
     Qt_Key_Return = Qt.Key_Return
+    Qt_Control_Modifier = Qt.ControlModifier
 
     Qt_Event_KeyPress = QEvent.KeyPress
 

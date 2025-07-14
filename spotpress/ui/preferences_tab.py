@@ -73,9 +73,9 @@ class PreferencesTab(QWidget):
 
         def make_group(title):
             box = QGroupBox(title)
-            box.setStyleSheet(
-                "QGroupBox { background-color: #f4f4f4; border: 1px solid #ccc; border-radius: 4px; margin-top: 1ex; padding: 6px; }"
-            )
+            # box.setStyleSheet(
+            #     "QGroupBox { background-color: #f4f4f4; border: 1px solid #ccc; border-radius: 4px; margin-top: 1ex; padding: 6px; }"
+            # )
             return box
 
         left_layout = QVBoxLayout()
