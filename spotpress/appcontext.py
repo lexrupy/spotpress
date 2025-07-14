@@ -188,11 +188,7 @@ class AppContext(QObject):
         elif key == "spotlight_size":
             pt.spotlight_size.setValue(value)
         elif key == "spotlight_background_mode":
-            spt_btn = pt.spotlight_radio_group.button(value)
-            if spt_btn is not None:
-                spt_btn.setChecked(True)
-            else:
-                pt.spotlight_shade_radio.setChecked(True)  # fallback
+            pt.spotlight_bg_mode.setCurrentIndex(value)
         elif key == "spotlight_border":
             pt.spotlight_border.setChecked(value)
 
@@ -205,11 +201,7 @@ class AppContext(QObject):
         elif key == "magnify_zoom":
             pt.magnify_zoom.setValue(value)
         elif key == "magnify_background_mode":
-            mag_btn = pt.magnify_radio_group.button(value)
-            if mag_btn is not None:
-                mag_btn.setChecked(True)
-            else:
-                pt.magnify_none_radio.setChecked(True)  # fallback
+            pt.magnify_bg_mode.setCurrentIndex(value)
 
         elif key == "laser_dot_size":
             pt.laser_dot_size.setValue(value)

@@ -68,7 +68,7 @@ class SpotpressPreferences(QMainWindow):
 
         # Quando fechar a janela, ao invés de fechar, esconder
         self.setWindowFlags(self.windowFlags() | Qt_WindowMinimizeButtonHint)
-        self.setMinimumSize(650, 760)
+        self.setMinimumSize(650, 700)
 
         self._ctx = AppContext(
             screen_index=0,

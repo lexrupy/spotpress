@@ -844,6 +844,11 @@ class SpotlightOverlayWindow(QWidget):
                 self.next_overlay_color(direction)
             else:
                 self.change_spot_radius(direction)
+        elif self._ctx.current_mode == MODE_MAG_GLASS:
+            if _control:
+                self.change_spot_radius(direction)
+            else:
+                self.zoom(direction)
 
     def quit(self):
         self.set_mouse_mode()

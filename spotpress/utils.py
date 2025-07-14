@@ -1,3 +1,4 @@
+import enum
 from spotpress.qtcompat import (
     QColor,
     QImage,
@@ -10,8 +11,6 @@ from spotpress.qtcompat import (
     QGraphicsBlurEffect,
     Qt_Color_Transparent,
 )
-
-import enum
 
 
 try:
@@ -42,8 +41,8 @@ class Mode(enum.Enum):
     MOUSE = MODE_MOUSE
     SPOTLIGHT = MODE_SPOTLIGHT
     LASER = MODE_LASER
-    MAG_GLASS = MODE_MAG_GLASS
     PEN = MODE_PEN
+    MAG_GLASS = MODE_MAG_GLASS
 
 
 LASER_COLORS = [
