@@ -297,9 +297,9 @@ class BaseusOrangeDotAI(PointerDevice):
                     # Timeout, permite checar stop event
                     continue
         except OSError as e:
-            self._ctx.log(f"[ERRO] Falha ao ler do device: {e}")
+            self.log(f"[ERRO] Falha ao ler do device: {e}")
         except Exception as e:
-            self._ctx.log(f"[ERRO] Exceção inesperada: {e}")
+            self.log(f"[ERRO] Exceção inesperada: {e}")
 
     def processa_pacote_hid(self, data):
 
@@ -344,7 +344,7 @@ class BaseusOrangeDotAI(PointerDevice):
         current_mode = self._ctx.current_mode
         normal_mode = current_mode == MODE_MOUSE or ow.is_overlay_actually_visible()
 
-        # self._ctx.log(f"{button}")
+        # self.log(f"{button}")
         match button:
             case "OK":
                 if ow.is_overlay_actually_visible():

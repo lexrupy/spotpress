@@ -48,7 +48,7 @@ class DeviceMonitor(BaseDeviceMonitor):
                 uinput.KEY_VOLUMEUP,
                 uinput.KEY_VOLUMEDOWN,
             ],
-            name="Virtual Spotlight Mouse",
+            name="SpotPress Virtual Mouse and Keyboard",
         )
 
     def start_monitoring(self):
@@ -84,9 +84,7 @@ class DeviceMonitor(BaseDeviceMonitor):
                     )
                     old_device.stop()
                 if device:
-                    self._ctx.log(
-                        f"* Ativando: {device.__class__.__name__} ({device._known_paths})"
-                    )
+                    self._ctx.log(f"* Ativando: {device.display_name()}")
                     # device.ensure_monitoring()
                     self._ctx.set_active_device(device)
                     self._ctx.compatible_modes = sorted(
@@ -99,13 +97,11 @@ class DeviceMonitor(BaseDeviceMonitor):
     def add_monitored_device(self, cls, path=None):
         if cls not in self._monitored_devices:
             dev = cls(app_ctx=self._ctx, hidraw_path=path)
-            # threading.Thread(target=dev.monitor, daemon=True).start()
             self._monitored_devices[cls] = dev
-            self._ctx.log(f"Dispositivo detectado: {cls.__name__} (path: {path})")
+            self._ctx.log(f"* Dispositivo detectado: {cls.__name__} (path: {path})")
         else:
             dev = self._monitored_devices[cls]
             dev.add_known_path(path)
-            # dev.ensure_monitoring()
             self._ctx.log(f"{cls.__name__} já conhecido. Adicionando novo path: {path}")
 
         if len(self._monitored_devices) > 1:
@@ -136,7 +132,6 @@ class DeviceMonitor(BaseDeviceMonitor):
         for dev in self.get_monitored_devices():
             if path in dev._known_paths:
                 self._ctx.log(f"- Removendo path {path} do dispositivo {dev}")
-                # dev._known_paths.remove(path)
                 dev._known_paths.discard(path)
                 self._ctx.log(f"- Path {path} removido de {dev.__class__.__name__}")
                 if not dev._known_paths:
@@ -187,7 +182,6 @@ class DeviceMonitor(BaseDeviceMonitor):
                 else:
                     self._ctx.log(f"! Dispositivo {path} não apareceu após o plug.")
                     return  # não apareceu
-                # time.sleep(0.8)
                 for dev in self.get_monitored_devices():
                     if dev.known_path(path):
                         return  # já monitorado
@@ -223,19 +217,6 @@ class DeviceMonitor(BaseDeviceMonitor):
         self._hotplug_thread = threading.Thread(target=monitor_loop, daemon=True)
         self._hotplug_thread.start()
 
-    # def monitor_usb_hotplug(self):
-    #     def monitor_loop():
-    #         context = pyudev.Context()
-    #         monitor = pyudev.Monitor.from_netlink(context)
-    #         monitor.filter_by("input")
-    #         monitor.filter_by("hidraw")
-    #         monitor.start()
-    #
-    #         for device in iter(monitor.poll, None):
-    #             action = device.action  # 'add' ou 'remove'
-    #             self.hotplug_callback(action, device)
-    #
-    #     threading.Thread(target=monitor_loop, daemon=True).start()
     def stop_monitoring(self):
         self._ctx.log("* Encerrando monitoramento de dispositivos.")
         self._stop_event.set()

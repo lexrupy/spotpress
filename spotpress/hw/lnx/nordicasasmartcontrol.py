@@ -124,7 +124,7 @@ class ASASmartControlPointer(PointerDevice):
             self._auto_mode_timer.cancel()
 
         def timeout_callback():
-            self._ctx.log("[AUTO] Timer expirou, executando MOUSE_STOP")
+            self.log("[AUTO] Timer expirou, executando MOUSE_STOP")
             self.executa_acao("MOUSE_STOP")
 
         self._auto_mode_timer = threading.Timer(
@@ -169,22 +169,9 @@ class ASASmartControlPointer(PointerDevice):
                     continue
 
         except OSError as e:
-            self._ctx.log(f"[ERRO] Falha ao ler do device: {e}")
+            self.log(f"[ERRO] Falha ao ler do device: {e}")
         except Exception as e:
-            self._ctx.log(f"[ERRO] Exceção inesperada: {e}")
-
-    # def read_pacotes_completos(self, f):
-    #     try:
-    #         while not self._stop_hidraw_event.is_set():
-    #             b = f.read(8)
-    #             if not b:
-    #                 # time.sleep(0.01)
-    #                 break
-    #             yield bytes(b)
-    #     except OSError as e:
-    #         self._ctx.log(f"[ERRO] Falha ao ler do device: {e}")
-    #     except Exception as e:
-    #         self._ctx.log(f"[ERRO] Exceção inesperada: {e}")
+            self.log(f"[ERRO] Exceção inesperada: {e}")
 
     def processa_pacote_hid(self, data):
 
@@ -224,7 +211,7 @@ class ASASmartControlPointer(PointerDevice):
         normal_mode = current_mode == MODE_MOUSE or ow.is_overlay_actually_visible()
 
         if button != "MOUSE_MOVE":
-            self._ctx.log(f"EXECUTA ACAO -> {button}")
+            self.log(f"EXECUTA ACAO -> {button}")
         match button:
             case "TAB":
                 ow.switch_mode()
@@ -237,7 +224,7 @@ class ASASmartControlPointer(PointerDevice):
                     now = time.time()
                     if now - self._last_mouse_move_action > 1.2:
                         self._last_mouse_move_action = now
-                        self._ctx.log(f"EXECUTA ACAO -> {button}")
+                        self.log(f"EXECUTA ACAO -> {button}")
                         self._ctx.show_overlay()
             case "MOUSE_STOP":
                 if ow.auto_mode_enabled() and ow.is_overlay_actually_visible():
@@ -310,7 +297,7 @@ class ASASmartControlPointer(PointerDevice):
             direction = "down"
         else:
             direction = "up"
-        self._ctx.log(f"{all_keys[ev.code]} - {direction}")
+        self.log(f"{all_keys[ev.code]} - {direction}")
 
     def _verifica_direcao_gestos(self):
         if len(self._rel_x_buffer) == self._rel_buffer_size:

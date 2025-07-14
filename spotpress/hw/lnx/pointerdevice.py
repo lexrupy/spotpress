@@ -40,9 +40,7 @@ class PointerDevice(BasePointerDevice):
 
     def _start_thread(self, name, target):
         if name in self._thread_set:
-            self._ctx.log(
-                f"* Tentativa de Criar Thread já existente com mesmo nome: {name}"
-            )
+            self.log(f"* Tentativa de Criar Thread já existente com mesmo nome: {name}")
             return
         t = threading.Thread(target=target, daemon=True, name=name)
         t.start()
@@ -58,7 +56,7 @@ class PointerDevice(BasePointerDevice):
                     "event_thread", lambda: self.read_input_events(devs)
                 )
             else:
-                self._ctx.log(
+                self.log(
                     "* Nenhum dispositivo de entrada conhecido encontrado para bloquear."
                 )
 
@@ -70,7 +68,7 @@ class PointerDevice(BasePointerDevice):
                     devices.append(evdev.InputDevice(path))
                     # self._ctx.log(f"* Encontrado device de entrada: {path}")
                 except Exception as e:
-                    self._ctx.log(f"* Erro ao acessar {path}: {e}")
+                    self.log(f"* Erro ao acessar {path}: {e}")
         return devices
 
     def monitor(self):
@@ -84,37 +82,28 @@ class PointerDevice(BasePointerDevice):
         self._stop_hidraw_thread.clear()
 
         def run():
-            self._ctx.log(
-                f"[{self.__class__.__name__}] Iniciando monitoramento de hidraw ({self.path})"
-            )
+            self.log(f"* Device monitorado: {self.path}")
             try:
                 if os.path.exists(self.path):
                     with open(self.path, "rb") as f:
-                        # fd = f.fileno()
-                        # os.set_blocking(fd, False)
                         for pacote in self.read_pacotes_completos(f):
                             self.processa_pacote_hid(pacote)
             except PermissionError:
-                self._ctx.log(
+                self.log(
                     f"* Sem permissão para acessar {self.path} (tente ajustar udev ou rodar com sudo)"
                 )
             except KeyboardInterrupt:
-                self._ctx.log(f"\nFinalizando monitoramento de {self.path}")
+                self.log(f"\nFinalizando monitoramento de {self.path}")
             except OSError as e:
                 if e.errno == 5:  # Input/output error
-                    self._ctx.log("- Dispositivo desconectado ou erro de I/O")
+                    self.log("- Dispositivo desconectado ou erro de I/O")
                 else:
-                    self._ctx.log(f"* Erro em {self.path}: {e}")
+                    self.log(f"* Erro em {self.path}: {e}")
 
             except Exception as e:
-                self._ctx.log(f"*  Erro em {self.path}: {e}")
-            self._ctx.log(
-                f"[{self.__class__.__name__}] Finalizou thread hidraw ({self.path})"
-            )
+                self.log(f"*  Erro em {self.path}: {e}")
+            self.log(f"Finalizou thread hidraw ({self.path})")
 
-        # self._hidraw_thread = threading.Thread(target=run, daemon=True).start()
-        # self._hidraw_thread = threading.Thread(target=run, daemon=True)
-        # self._hidraw_thread.start()
         self._hidraw_thread = self._start_thread("hidraw_thread", run)
 
     def stop_hidraw_monitoring(self):
@@ -152,7 +141,7 @@ class PointerDevice(BasePointerDevice):
                 need_start = True
 
             if need_start:
-                self._ctx.log(f"* Monitorando {self.display_name()}")
+                self.log(f"* Monitorando {self.display_name()}")
                 self.monitor()
 
     def known_path(self, path):
@@ -170,7 +159,7 @@ class PointerDevice(BasePointerDevice):
 
     def remove_known_path(self, path):
         if path in self._known_paths:
-            self._ctx.log(f"- Removendo path {path} de {self.__class__.__name__}")
+            self.log(f"- Removendo path {path} de {self.__class__.__name__}")
             self._known_paths.remove(path)
         return len(self._known_paths) == 0  # retorna True se ficou vazio
 
@@ -197,7 +186,7 @@ class PointerDevice(BasePointerDevice):
                             if line.startswith("HID_NAME="):
                                 return line.strip().split("=", 1)[1]
         except Exception as e:
-            self._ctx.log(f"[display_name] Erro ao obter nome: {e}")
+            self.log(f"Erro ao obter nome: {e}")
 
         return self.__class__.__name__  # Fallback genérico
 
@@ -240,13 +229,11 @@ class PointerDevice(BasePointerDevice):
                 try:
                     dev.grab()
                     fd_para_dev[dev.fd] = dev
-                    self._ctx.log(f"* Monitorado: {dev.path}")
+                    self.log(f"* Device monitorado: {dev.path}")
                 except Exception as e:
-                    self._ctx.log(
+                    self.log(
                         f"* Erro ao monitorar dispositivo {dev.path}: {e}. Tente executar como root ou ajuste as regras udev."
                     )
-            self._ctx.log("* Monitorando dispositivos...")
-
             try:
                 while not self._stop_event_thread.is_set():
                     r, _, _ = select.select(fd_para_dev, [], [], 0.1)
@@ -260,7 +247,7 @@ class PointerDevice(BasePointerDevice):
 
                         except OSError as e:
                             if e.errno == 19:  # No such device
-                                self._ctx.log(f"- Dispositivo desconectado: {dev.path}")
+                                self.log(f"- Dispositivo desconectado: {dev.path}")
                                 # Remove dispositivo da lista para não monitorar mais
                                 fd_para_dev.pop(fd, None)
                                 try:
@@ -269,7 +256,7 @@ class PointerDevice(BasePointerDevice):
                                     pass
                                 # Opcional: se não há mais dispositivos, pode encerrar ou esperar
                                 if not fd_para_dev:
-                                    self._ctx.log(
+                                    self.log(
                                         "* Nenhum dispositivo restante para monitorar. Encerrando thread."
                                     )
                                     return
@@ -277,7 +264,7 @@ class PointerDevice(BasePointerDevice):
                                 raise
 
             except KeyboardInterrupt:
-                self._ctx.log("\n* Encerrando monitoramento.")
+                self.log("\n* Encerrando monitoramento.")
             finally:
                 for dev in devices:
                     try:
@@ -294,10 +281,13 @@ class PointerDevice(BasePointerDevice):
         # raise NotImplementedError()
         pass
 
+    def log(self, message):
+        self._ctx.log(f"[{self.__class__.__name__}] - {message}")
+
     def log_key(self, ev):
         all_keys = ec.KEY | ec.BTN
         if ev.value == 1:
             direction = "down"
         else:
             direction = "up"
-        self._ctx.log(f"{all_keys[ev.code]} - {direction}")
+        self.log(f"{all_keys[ev.code]} - {direction}")
