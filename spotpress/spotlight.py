@@ -288,8 +288,8 @@ class SpotlightOverlayWindow(QWidget):
         for i in range(1, total_modes + 1):  # evita loop infinito
             next_index = (current_index + step * i) % total_modes
             next_mode = all_modes[next_index]
-            if next_mode == MODE_PEN and self.auto_mode_enabled():
-                continue  # pula MODE_PEN
+            # if next_mode == MODE_PEN and self.auto_mode_enabled():
+            #     continue  # pula MODE_PEN
             if next_mode in compatible:
                 self.apply_mode_change(next_mode)
                 return
