@@ -92,7 +92,7 @@ class DevicesTab(QWidget):
     def select_device_on_list(self, device):
         for i in range(self.devices_list.count()):
             item = self.devices_list.item(i)
-            dev = item.data(QtItem_UserRole)
+            dev = item.data(QtItem_UserRole)  # pyright: ignore
             if dev == device:
                 self.devices_list.setCurrentItem(item)
                 break
