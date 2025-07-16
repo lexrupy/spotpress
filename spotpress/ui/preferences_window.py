@@ -65,7 +65,7 @@ class SpotpressPreferences(QMainWindow):
     show_overlay_signal = pyqtSignal()
     hide_overlay_signal = pyqtSignal()
 
-    def __init__(self):
+    def __init__(self, debug_mode=False):
         super().__init__()
 
         self.ipc_server = None
@@ -84,6 +84,7 @@ class SpotpressPreferences(QMainWindow):
             show_overlay_function=self.thread_safe_show_overlay,
             hide_overlay_function=self.thread_safe_hide_overlay,
             main_window=self,
+            debug_mode=debug_mode,
         )
 
         self._ctx.windows_os = WINDOWS_OS
@@ -95,7 +96,10 @@ class SpotpressPreferences(QMainWindow):
 
         self.tabs.addTab(self.preferences_tab, "Preferences")
         self.tabs.addTab(self.devices_tab, "Devices")
-        self.tabs.addTab(self.log_tab, "Log")
+
+        if debug_mode:
+            self.log_tab = LogTab(self, self._ctx)
+            self.tabs.addTab(self.log_tab, "Log")
 
         self.devices_tab.screen_changed.connect(self.change_screen)
 
@@ -145,8 +149,8 @@ class SpotpressPreferences(QMainWindow):
         self._ctx.ui_ready = True
 
         self.load_config()
-
-        self.log_signal.connect(self.append_log)
+        if debug_mode:
+            self.log_signal.connect(self.append_log)
         self.info_signal.connect(self.show_info)
         self.show_overlay_signal.connect(self.show_overlay)
         self.hide_overlay_signal.connect(self.hide_overlay)
@@ -161,9 +165,10 @@ class SpotpressPreferences(QMainWindow):
         self.refresh_devices_list()
         self.preferences_tab.update_modes_list_from_context()
 
-        # from spotpress.utils import set_debug_border
+        # if debug_mode:
+        #     from spotpress.utils import set_debug_border
         #
-        # set_debug_border(self)
+        #     set_debug_border(self)
 
     def handle_command_from_ipc(self, command: str):
         if command == "--ping":
@@ -312,7 +317,10 @@ class SpotpressPreferences(QMainWindow):
         msg.exec()
 
     def append_log(self, message):
-        self.log_tab.append_log_message(message)
+        if self._ctx.debug_mode:
+            if hasattr(self, "log_tab"):
+                self.log_tab.append_log_message(message)
+            print(message)
 
     def show_info(self, mensagem):
         if self._ctx.info_overlay:

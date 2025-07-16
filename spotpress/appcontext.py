@@ -17,8 +17,10 @@ class AppContext(QObject):
         hide_overlay_function=None,
         active_device_changed_function=None,
         main_window=None,
+        debug_mode=False,
     ):
         super().__init__()
+        self._debug_mode = debug_mode
         self._screen_index = screen_index
         self._log_function = log_function
         self._spotlight_overlay_window = overlay_window
@@ -39,6 +41,14 @@ class AppContext(QObject):
         self._device_monitor = None
 
         self.configChanged.connect(self._on_config_changed_signal)
+
+    @property
+    def debug_mode(self):
+        return self._debug_mode
+
+    @debug_mode.setter
+    def debug_mode(self, dbg):
+        self._debug_mode = dbg
 
     @property
     def active_device_changed_function(self):

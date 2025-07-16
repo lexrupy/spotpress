@@ -16,14 +16,17 @@ if __name__ == "__main__":
         if send_command_to_existing_instance(command):
             sys.exit(0)
 
-    # Cria o servidor para receber comandos externos
+    debug_mode = False
+    if "--debug" in sys.argv:
+        print("[DEBUG] Running in debug mode...")
+        debug_mode = True
 
     app = QApplication(sys.argv)
     app.setApplicationName("SpotPress")
     app.setWindowIcon(QIcon(ICON_FILE))
     load_dark_theme(app)
 
-    window = SpotpressPreferences()
+    window = SpotpressPreferences(debug_mode)
 
     window.ipc_server = setup_ipc_server(  # pyright: ignore
         window.handle_command_from_ipc
