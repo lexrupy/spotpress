@@ -10,4 +10,4 @@ while [ -L "$SOURCE" ]; do
 done
 DIR="$(cd -P "$(dirname "$SOURCE")" && pwd)"
 
-"$DIR/spotpressctl.py" --start
+exec "$DIR/main.py" "$0" &
