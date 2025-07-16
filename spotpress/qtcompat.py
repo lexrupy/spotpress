@@ -14,6 +14,7 @@ try:
         QMetaObject,
         Q_ARG,
     )
+    from PyQt6.QtNetwork import QLocalServer, QLocalSocket
     from PyQt6.QtWidgets import (
         QApplication,
         QWidget,
@@ -174,6 +175,7 @@ except ImportError:
         QRectF,
         Q_ARG,
     )
+    from PyQt5.QtNetwork import QLocalServer, QLocalSocket  # pyright: ignore
     from PyQt5.QtWidgets import (  # pyright: ignore
         QApplication,
         QMenu,
@@ -314,6 +316,8 @@ except ImportError:
 # Opcional: expose tudo em um namespace para importar facilmente
 __all__ = [
     "Qt",
+    "QLocalServer",
+    "QLocalSocket",
     "QEvent",
     "QObject",
     "QThread",

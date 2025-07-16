@@ -1,4 +1,6 @@
 import enum
+import os
+import getpass
 from spotpress.qtcompat import (
     QColor,
     QImage,
@@ -45,6 +47,20 @@ class Mode(enum.Enum):
     MAG_GLASS = MODE_MAG_GLASS
 
 
+MODES_CMD_LINE_MAP = {
+    "mouse": 0,
+    "0": 0,
+    "spotlight": 1,
+    "1": 1,
+    "laser": 2,
+    "2": 2,
+    "pen": 3,
+    "3": 3,
+    "mag_glass": 4,
+    "4": 4,
+}
+
+
 LASER_COLORS = [
     (QColor(255, 0, 0), "Red"),
     (QColor(0, 255, 0), "Green"),
@@ -73,6 +89,20 @@ MODE_NAME_TO_ID = {v: k for k, v in MODE_MAP.items()}
 
 # Lista default com todos habilitados
 DEFAULT_MODES = [(name, True) for name in MODE_NAME_TO_ID.keys()]
+
+
+CONFIG_PATH = os.path.expanduser(
+    os.path.join("~", ".config", "spotpress", "config.ini")
+)
+
+ICON_FILE = os.path.join(
+    os.path.dirname(os.path.realpath(__file__)), "..", "spotpress.png"
+)
+
+
+SOCKET_NAME = f"spotpress_socket_{getpass.getuser()}"
+
+WINDOWS_OS = False
 
 
 class SingletonMeta(type):

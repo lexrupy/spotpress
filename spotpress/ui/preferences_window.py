@@ -29,18 +29,18 @@ from spotpress.qtcompat import (
 from spotpress.appcontext import AppContext
 from spotpress.spotlight import SpotlightOverlayWindow
 from spotpress.infoverlay import InfOverlayWindow
-from spotpress.utils import get_screen_geometry, load_dark_theme
 from spotpress.ipc import setup_ipc_server
+from spotpress.utils import (
+    MODES_CMD_LINE_MAP,
+    get_screen_geometry,
+    ICON_FILE,
+    CONFIG_PATH,
+    WINDOWS_OS,
+)
 from spotpress.ui.preferences_tab import PreferencesTab
 from spotpress.ui.devices_tab import DevicesTab
 from spotpress.ui.log_tab import LogTab
 
-
-CONFIG_PATH = os.path.expanduser("~/.config/spotpress/config.ini")
-
-ICON_FILE = os.path.join(os.path.dirname(os.path.realpath(__file__)), "spotpress.png")
-
-WINDOWS_OS = False
 
 if sys.platform.startswith("win"):
     WINDOWS_OS = True
@@ -72,6 +72,7 @@ class SpotpressPreferences(QMainWindow):
         if self._ipc_server is None:
             print("SpotPress já está rodando.")
             sys.exit(0)
+
         self.setWindowTitle("Spotpress preferences dialog")
         self.setGeometry(100, 100, 650, 700)
 
@@ -166,6 +167,20 @@ class SpotpressPreferences(QMainWindow):
         # from spotpress.utils import set_debug_border
         #
         # set_debug_border(self)
+
+    def handle_command_from_ipc(self, command: str):
+        if command == "--show-config":
+            self.show_normal()
+        elif command == "--quit":
+            self.on_quit_clicked()
+        elif command.startswith("--set-mode="):
+            mode = command.split("=", 1)[1]
+            if mode in MODES_CMD_LINE_MAP.keys() and self._ctx.overlay_window:
+                mode_to_switch = MODES_CMD_LINE_MAP[mode]
+                self._ctx.overlay_window.switch_mode(direct_mode=mode_to_switch)
+                self.thread_safe_log(f"[IPC] Comando: mudar para modo '{mode}'")
+        else:
+            self.thread_safe_log(f"[IPC] Comando desconhecido: {command}")
 
     def center_on_screen(self):
         screen = QApplication.primaryScreen()
@@ -367,13 +382,3 @@ class SpotpressPreferences(QMainWindow):
         key = event.key()
         if key == Qt_Key_S:
             self.show_overlay()
-
-
-if __name__ == "__main__":
-    app = QApplication(sys.argv)
-    app.setApplicationName("SpotPress")
-    app.setWindowIcon(QIcon(ICON_FILE))
-    load_dark_theme(app)
-    window = SpotpressPreferences()
-    window.show()
-    sys.exit(app.exec())

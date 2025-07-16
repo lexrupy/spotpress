@@ -109,7 +109,7 @@ class BaseusOrangeDotAI(PointerDevice):
                     state["repeat_active"] = True
                 self._repeat_timer(botao)
             else:
-                self.executa_acao(button_name)
+                self.do_action(button_name)
 
         long_timer = threading.Timer(self.LONG_PRESS_INTERVAL, set_long_pressed)
         long_timer.start()
@@ -131,7 +131,7 @@ class BaseusOrangeDotAI(PointerDevice):
                     not current_state.get("long_pressed", False)
                     and not current_state.get("repeat_active", False)
                 ):
-                    self.executa_acao(botao)
+                    self.do_action(botao)
                 self._pending_click_timers.pop(botao, None)
 
             click_timer = threading.Timer(
@@ -164,12 +164,12 @@ class BaseusOrangeDotAI(PointerDevice):
             and duration < self.LONG_PRESS_INTERVAL
             and not state["long_pressed"]
         ):
-            self.executa_acao(f"{botao}++")
+            self.do_action(f"{botao}++")
             return
 
         # Caso 2: já emitiu long ou repeat, então não faz mais nada
         if state.get("long_pressed", False) or state.get("repeat_active", False):
-            self.executa_acao(f"{botao}+release")
+            self.do_action(f"{botao}+release")
             return
 
     def _repeat_timer(self, botao):
@@ -178,7 +178,7 @@ class BaseusOrangeDotAI(PointerDevice):
             if not state or not state.get("repeat_active"):
                 return
             button = self._build_button_name(botao, repeat=True)
-        self.executa_acao(button)
+        self.do_action(button)
         # Reagenda fora do lock para evitar deadlock
         t = threading.Timer(self.REPEAT_INTERVAL, self._repeat_timer, args=(botao,))
         with self._lock:
@@ -327,7 +327,7 @@ class BaseusOrangeDotAI(PointerDevice):
 
         # Estes botoes executam diretamente, sem tratamento
         if button in self._single_action_buttons.values():
-            self.executa_acao(button)
+            self.do_action(button)
         else:
             # Se for um novo botão e havia outro ativo, libera o anterior
             if self._ultimo_botao_ativo and self._ultimo_botao_ativo != button:
@@ -339,7 +339,7 @@ class BaseusOrangeDotAI(PointerDevice):
             # Processa pressão do novo botão
             self._on_button_press(button)
 
-    def executa_acao(self, button):
+    def do_action(self, button):
         ow = self._ctx.overlay_window
         current_mode = self._ctx.current_mode
         normal_mode = current_mode == MODE_MOUSE or ow.is_overlay_actually_visible()

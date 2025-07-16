@@ -271,9 +271,7 @@ class SpotlightOverlayWindow(QWidget):
             return
 
         if direct_mode >= 0:
-            if direct_mode in compatible and not (
-                direct_mode == MODE_PEN and self.auto_mode_enabled()
-            ):
+            if direct_mode in compatible:
                 self.apply_mode_change(direct_mode)
             return
 
@@ -347,7 +345,7 @@ class SpotlightOverlayWindow(QWidget):
 
         self.update()
 
-    def zoom(self, direction):
+    def zoom(self, direction=1):
         if self._ctx.current_mode == MODE_MAG_GLASS:
             if direction > 0:
                 self._ctx.config["magnify_zoom"] = min(

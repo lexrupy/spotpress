@@ -47,6 +47,7 @@ class DeviceMonitor(BaseDeviceMonitor):
                 uinput.KEY_LEFTSHIFT,
                 uinput.KEY_VOLUMEUP,
                 uinput.KEY_VOLUMEDOWN,
+                uinput.KEY_MUTE,
             ],
             name="SpotPress Virtual Mouse and Keyboard",
         )

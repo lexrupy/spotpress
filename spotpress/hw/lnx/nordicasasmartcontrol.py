@@ -106,12 +106,12 @@ class ASASmartControlPointer(PointerDevice):
             and (now - last_release) < self.DOUBLE_CLICK_INTERVAL
             and duration < self.DOUBLE_CLICK_INTERVAL
         ):
-            self.executa_acao(f"{botao}++")
+            self.do_action(f"{botao}++")
             return
 
         # Agendar clique simples após DOUBLE_CLICK_INTERVAL
         def delayed_click():
-            self.executa_acao(botao)
+            self.do_action(botao)
             if botao in self._pending_click_timers:
                 del self._pending_click_timers[botao]
 
@@ -125,7 +125,7 @@ class ASASmartControlPointer(PointerDevice):
 
         def timeout_callback():
             self.log("[AUTO] Timer expirou, executando MOUSE_STOP")
-            self.executa_acao("MOUSE_STOP")
+            self.do_action("MOUSE_STOP")
 
         self._auto_mode_timer = threading.Timer(
             self._auto_mode_timeout, timeout_callback
@@ -203,7 +203,7 @@ class ASASmartControlPointer(PointerDevice):
         # Processa pressão do novo botão
         self._on_button_press(button)
 
-    def executa_acao(self, button):
+    def do_action(self, button):
         if self._ctx.active_device != self:
             return
         ow = self._ctx.overlay_window
@@ -305,13 +305,13 @@ class ASASmartControlPointer(PointerDevice):
             direita = sum(1 for v in self._rel_x_buffer if v > 0)
 
             if esquerda >= self._rel_trigger_count:
-                self.executa_acao("G_LEFT")
+                self.do_action("G_LEFT")
                 self._rel_x_buffer.clear()
                 self._rel_y_buffer.clear()
                 return
 
             if direita >= self._rel_trigger_count:
-                self.executa_acao("G_RIGHT")
+                self.do_action("G_RIGHT")
                 self._rel_x_buffer.clear()
                 self._rel_y_buffer.clear()
                 return
@@ -321,13 +321,13 @@ class ASASmartControlPointer(PointerDevice):
             baixo = sum(1 for v in self._rel_y_buffer if v > 0)
 
             if cima >= self._rel_trigger_count:
-                self.executa_acao("G_UP")
+                self.do_action("G_UP")
                 self._rel_x_buffer.clear()
                 self._rel_y_buffer.clear()
                 return
 
             if baixo >= self._rel_trigger_count:
-                self.executa_acao("G_DOWN")
+                self.do_action("G_DOWN")
                 self._rel_x_buffer.clear()
                 self._rel_y_buffer.clear()
                 return
@@ -355,7 +355,7 @@ class ASASmartControlPointer(PointerDevice):
                 self._last_mouse_movement = time.time()
                 if self._last_mouse_movement - self._mouse_down_time > 1.5:
                     self._ctx.ui.emit((event.type, event.code), event.value)
-                    self.executa_acao("MOUSE_MOVE")
+                    self.do_action("MOUSE_MOVE")
 
         elif event.type == ec.EV_KEY:
             self._last_movement_time = time.time()
@@ -369,6 +369,6 @@ class ASASmartControlPointer(PointerDevice):
                             self._is_mouse_down = True
                             self._mouse_down_time = time.time()
                             if ow and ow.is_overlay_actually_visible():
-                                self.executa_acao("BTN_LEFT")
+                                self.do_action("BTN_LEFT")
                         else:
                             self._is_mouse_down = False

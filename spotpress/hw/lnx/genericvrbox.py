@@ -82,7 +82,7 @@ class GenericVRBoxPointer(PointerDevice):
                     state["repeat_active"] = True
                 self._repeat_timer(botao)
             else:
-                self.executa_acao(button_name, state=1)
+                self.do_action(button_name, state=1)
 
         long_timer = threading.Timer(self.LONG_PRESS_INTERVAL, set_long_pressed)
         long_timer.start()
@@ -104,7 +104,7 @@ class GenericVRBoxPointer(PointerDevice):
                     not current_state["long_pressed"]
                     and not current_state["repeat_active"]
                 ):
-                    self.executa_acao(botao, state=1)
+                    self.do_action(botao, state=1)
                 self._pending_click_timers.pop(botao, None)
 
             click_timer = threading.Timer(
@@ -119,7 +119,7 @@ class GenericVRBoxPointer(PointerDevice):
             if not state or not state.get("repeat_active"):
                 return
             button = self._build_button_name(botao, repeat=True)
-        self.executa_acao(button, state=1)
+        self.do_action(button, state=1)
         # Reagenda fora do lock para evitar deadlock
         t = threading.Timer(self.REPEAT_INTERVAL, self._repeat_timer, args=(botao,))
         with self._lock:
@@ -154,14 +154,14 @@ class GenericVRBoxPointer(PointerDevice):
             and duration < self.LONG_PRESS_INTERVAL
             and not state["long_pressed"]
         ):
-            self.executa_acao(f"{botao}++", state=1)
+            self.do_action(f"{botao}++", state=1)
             return
 
         # Caso 2: já emitiu long ou repeat, então não faz mais nada
         if state["long_pressed"] or state["repeat_active"]:
             return
 
-    def executa_acao(self, botao, state):
+    def do_action(self, botao, state):
         ow = self._ctx.overlay_window
         current_mode = self._ctx.current_mode
         match botao:
