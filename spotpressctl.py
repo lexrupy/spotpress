@@ -52,7 +52,7 @@ def launch_spotpress():
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
         )
-        print("SpotPress launched in the background.")
+        print("SpotPress launched.")
         return True
     except Exception as e:
         print(f"Failed to launch SpotPress: {e}")
