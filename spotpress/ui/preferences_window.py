@@ -68,10 +68,7 @@ class SpotpressPreferences(QMainWindow):
     def __init__(self):
         super().__init__()
 
-        self._ipc_server = setup_ipc_server(self.handle_command_from_ipc)
-        if self._ipc_server is None:
-            print("SpotPress já está rodando.")
-            sys.exit(0)
+        self.ipc_server = None
 
         self.setWindowTitle("Spotpress preferences dialog")
         self.setGeometry(100, 100, 650, 700)
@@ -169,10 +166,18 @@ class SpotpressPreferences(QMainWindow):
         # set_debug_border(self)
 
     def handle_command_from_ipc(self, command: str):
-        if command == "--show-config":
-            self.show_normal()
+        if command == "--ping":
+            pass  # Used only to check if the instance is alive
+        elif command == "--show-window":
+            self.show_window()
+        elif command == "--hide-window":
+            self.hide_window()
         elif command == "--quit":
             self.on_quit_clicked()
+        elif command.startswith("--set-auto-mode="):
+            val = command.split("=", 1)[1] == "on"
+            if self._ctx.overlay_window:
+                self._ctx.overlay_window.set_auto_mode(enable=val)
         elif command.startswith("--set-mode="):
             mode = command.split("=", 1)[1]
             if mode in MODES_CMD_LINE_MAP.keys() and self._ctx.overlay_window:
@@ -194,9 +199,9 @@ class SpotpressPreferences(QMainWindow):
         if reason == QSystemTrayIcon_Trigger:
 
             if self.isVisible():
-                self.hide()
+                self.hide_window()
             else:
-                self.show_normal()
+                self.show_window()
                 self.activateWindow()
 
     def refresh_devices_list(self):
@@ -244,8 +249,8 @@ class SpotpressPreferences(QMainWindow):
         self.tray_icon = QSystemTrayIcon(icon, self)
 
         menu = QMenu()
-        restore_action = QAction("Restaurar", self)
-        restore_action.triggered.connect(self.show_normal)
+        restore_action = QAction("Restore", self)
+        restore_action.triggered.connect(self.show_window)
         menu.addAction(restore_action)
         about_action = QAction("About...", self)
         about_action.triggered.connect(self.show_about)
@@ -283,10 +288,13 @@ class SpotpressPreferences(QMainWindow):
                 screen_geometry=geometry,
             )
 
-    def show_normal(self):
+    def show_window(self):
         self.show()
         self.raise_()
         self.activateWindow()
+
+    def hide_window(self):
+        self.hide()
 
     def show_about(self):
         msg = QMessageBox(self)
@@ -336,7 +344,7 @@ class SpotpressPreferences(QMainWindow):
 
     # Métodos de eventos (placeholders)
     def on_quit_clicked(self):
-        self.hide()
+        self.hide_window()
         self.running = False
         if hasattr(self, "device_monitor"):
             self.device_monitor.stop_monitoring()
@@ -350,7 +358,7 @@ class SpotpressPreferences(QMainWindow):
         QApplication.quit()
 
     def on_close_clicked(self):
-        self.hide()
+        self.hide_window()
         self.append_log("Janela oculta. Clique no ícone da bandeja para restaurar.")
 
     def change_screen(self, screen_index):

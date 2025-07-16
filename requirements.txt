@@ -1,6 +1,4 @@
 evdev
-pyqt5 
+pyqt6 
 python-uinput 
-mss 
 pyudev 
-screeninfo

@@ -25,9 +25,11 @@ if __name__ == "__main__":
 
     window = SpotpressPreferences()
 
-    window._ipc_server = setup_ipc_server(window.handle_command_from_ipc)
-    if server is None:
-        print("SpotPress já está rodando.")
+    window.ipc_server = setup_ipc_server(  # pyright: ignore
+        window.handle_command_from_ipc
+    )
+    if window.ipc_server is None:
+        print("Spotpress is already running...")
         sys.exit(0)
 
     window.show()

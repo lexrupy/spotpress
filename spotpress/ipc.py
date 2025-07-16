@@ -2,8 +2,8 @@ from spotpress.qtcompat import QLocalSocket, QLocalServer
 from spotpress.utils import SOCKET_NAME
 import atexit
 
-# Garante que o socket seja removido em encerramento normal
-atexit.register(lambda: QLocalServer.removeServer(SOCKET_NAME))
+# # Garante que o socket seja removido em encerramento normal
+# atexit.register(lambda: QLocalServer.removeServer(SOCKET_NAME))
 
 
 def send_command_to_existing_instance(command, name=SOCKET_NAME):
@@ -32,7 +32,7 @@ def setup_ipc_server(callback, name=SOCKET_NAME, parent=None):
     try:
         QLocalServer.removeServer(name)
     except Exception:
-        pass  # Pode ignorar falhas aqui
+        pass
 
     server = QLocalServer(parent)
     if not server.listen(name):
@@ -45,7 +45,6 @@ def setup_ipc_server(callback, name=SOCKET_NAME, parent=None):
 
         def read_and_dispatch():
             try:
-                # data = bytes(socket.readAll()).decode(errors="ignore").strip()
                 data = socket.readAll().data().decode(errors="ignore").strip()
                 if data:
                     callback(data)
