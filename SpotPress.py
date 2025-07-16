@@ -30,6 +30,7 @@ from spotpress.appcontext import AppContext
 from spotpress.spotlight import SpotlightOverlayWindow
 from spotpress.infoverlay import InfOverlayWindow
 from spotpress.utils import get_screen_geometry, load_dark_theme
+from spotpress.ipc import setup_ipc_server
 from spotpress.ui.preferences_tab import PreferencesTab
 from spotpress.ui.devices_tab import DevicesTab
 from spotpress.ui.log_tab import LogTab
@@ -66,6 +67,11 @@ class SpotpressPreferences(QMainWindow):
 
     def __init__(self):
         super().__init__()
+
+        self._ipc_server = setup_ipc_server(self.handle_command_from_ipc)
+        if self._ipc_server is None:
+            print("SpotPress já está rodando.")
+            sys.exit(0)
         self.setWindowTitle("Spotpress preferences dialog")
         self.setGeometry(100, 100, 650, 700)
 
@@ -121,6 +127,13 @@ class SpotpressPreferences(QMainWindow):
         # Functional Startups
 
         self.tray_icon = None
+
+        self._info_timer = QTimer(self)
+        self._info_timer.setSingleShot(True)
+        self._info_timer.timeout.connect(
+            lambda: self._ctx.info_overlay and self._ctx.info_overlay.hide()
+        )
+
         self.create_tray_icon()
 
         self.center_on_screen()
@@ -158,7 +171,9 @@ class SpotpressPreferences(QMainWindow):
         screen = QApplication.primaryScreen()
         if screen:
             geometry = screen.availableGeometry()
-            self.move(geometry.center() - self.rect().center())  # pyright: ignore
+            fg = self.frameGeometry()
+            fg.moveCenter(geometry.center())
+            self.move(fg.topLeft())
 
     def on_tray_icon_activated(self, reason):
         if reason == QSystemTrayIcon_Trigger:
@@ -259,10 +274,6 @@ class SpotpressPreferences(QMainWindow):
         self.activateWindow()
 
     def show_about(self):
-        # for dev in self.device_monitor.get_monitored_devices():
-        #     print(
-        #         f"{dev}: monitoring event = {dev._event_thread.is_alive() if dev._event_thread else False}, hidraw = {dev._hidraw_thread.is_alive() if dev._hidraw_thread else False}"
-        #     )
         msg = QMessageBox(self)
         msg.setWindowTitle("About SpotPress...")
         msg.setText(
@@ -272,7 +283,7 @@ class SpotpressPreferences(QMainWindow):
             "Licenced under LGPL\nContributors:\nAlexandre da Silva <lexrupy>"
         )
 
-        pixmap = QPixmap(ICON_FILE)  # PNG já com o tamanho ideal
+        pixmap = QPixmap(ICON_FILE)
         msg.setIconPixmap(pixmap)
 
         msg.exec()
@@ -283,13 +294,6 @@ class SpotpressPreferences(QMainWindow):
     def show_info(self, mensagem):
         if self._ctx.info_overlay:
             self._ctx.info_overlay.show_message(mensagem)
-
-            if hasattr(self, "_info_timer") and self._info_timer:
-                self._info_timer.stop()
-
-            self._info_timer = QTimer(self)
-            self._info_timer.setSingleShot(True)
-            self._info_timer.timeout.connect(self._ctx.info_overlay.hide)
             self._info_timer.start(1000)
 
     def show_overlay(self):
