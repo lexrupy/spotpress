@@ -221,9 +221,20 @@ Settings are stored in `~/.config/spotpress/config.ini` and managed via the GUI.
 
 ## Currently Supported Pointers:
 
-- Baseus Orange Dot Wireless Presenter - ID `abc8:ca08` - _iTing BaseusPresent_
-- LeLong LE-7705 - ID `1915:1001` - _Nordic Semiconductor ASA Smart Control_
-- LeLong LE-7676 - ID `1915:1025` - _Nordic Semiconductor ASA USB Composite Device_
+### Baseus Orange Dot Wireless Presenter
+
+- ID `abc8:ca08` - _iTing BaseusPresent_
+  ![Baseus Orange Dot Wireless Presenter](docs/baseus_orange_dot_ai.jpg)
+
+### LeLong LE-7705
+
+- ID `1915:1001` - _Nordic Semiconductor ASA Smart Control_
+  ![LeLong LE-7705](docs/lelong_le7705.jpg)
+
+### LeLong LE-7676
+
+- ID `1915:1025` - _Nordic Semiconductor ASA USB Composite Device_
+  ![LeLong LE-7676](docs/lelong_le7676.jpg)
 
 ## Developing
 
