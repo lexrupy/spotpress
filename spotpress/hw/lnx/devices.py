@@ -41,7 +41,7 @@ class DeviceMonitor(BaseDeviceMonitor):
                 uinput.KEY_PAGEUP,
                 uinput.KEY_PAGEDOWN,
                 uinput.KEY_ESC,
-                # uinput.KEY_LEFTCTRL,
+                uinput.KEY_LEFTCTRL,
                 uinput.KEY_F5,
                 uinput.KEY_SPACE,
                 uinput.KEY_LEFTSHIFT,

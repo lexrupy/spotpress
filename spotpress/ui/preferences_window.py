@@ -29,7 +29,6 @@ from spotpress.qtcompat import (
 from spotpress.appcontext import AppContext
 from spotpress.spotlight import SpotlightOverlayWindow
 from spotpress.infoverlay import InfOverlayWindow
-from spotpress.ipc import setup_ipc_server
 from spotpress.utils import (
     MODES_CMD_LINE_MAP,
     get_screen_geometry,
@@ -75,7 +74,7 @@ class SpotpressPreferences(QMainWindow):
 
         # Quando fechar a janela, ao invés de fechar, esconder
         self.setWindowFlags(self.windowFlags() | Qt_WindowMinimizeButtonHint)
-        self.setMinimumSize(650, 750)
+        self.setMinimumSize(650, 700)
 
         self._ctx = AppContext(
             screen_index=0,

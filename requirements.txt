@@ -2,3 +2,4 @@ evdev
 pyqt6 
 python-uinput 
 pyudev 
+pyqtdarktheme

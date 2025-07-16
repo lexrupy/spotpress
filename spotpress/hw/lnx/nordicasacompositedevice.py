@@ -9,6 +9,8 @@ from spotpress.utils import (
     MODE_SPOTLIGHT,
     MODE_MAG_GLASS,
     MODE_PEN,
+    get_keychord_for_presentation_program,
+    refocus_presentation_window,
 )
 from spotpress.hw.lnx.pointerdevice import PointerDevice
 
@@ -37,7 +39,7 @@ class ASACompositeDevicePointer(PointerDevice):
         self._last_mouse_movement = 0
         self._last_mouse_move_action = 0
         self._mouse_down_time = 0
-        self._was_last_esc = False
+        self._was_last_esc = True
 
     def start_hidraw_monitoring(self):
         # No Hidraw monitoring needed in this device
@@ -68,7 +70,7 @@ class ASACompositeDevicePointer(PointerDevice):
 
         ow = self._ctx.overlay_window
         current_mode = self._ctx.current_mode
-        normal_mode = current_mode == MODE_MOUSE or ow.is_overlay_actually_visible()
+        normal_mode = current_mode == MODE_MOUSE or not ow.is_overlay_actually_visible()
 
         if button != "MOUSE_MOVE":
             self.log(f"EXECUTA ACAO -> {button}")
@@ -106,7 +108,9 @@ class ASACompositeDevicePointer(PointerDevice):
                 if current_mode in [MODE_SPOTLIGHT, MODE_MAG_GLASS]:
                     ow.change_spot_radius(-2)
             case "KEY_LEFT+PRESS" | "KEY_LEFT+REPEAT":
-                if ow.is_overlay_actually_visible():
+                if normal_mode:
+                    self.emit_key_press(uinput.KEY_PAGEUP)
+                elif ow.is_overlay_actually_visible():
                     if current_mode == MODE_MAG_GLASS:
                         ow.zoom(-1)
                     elif current_mode == MODE_LASER:
@@ -116,7 +120,9 @@ class ASACompositeDevicePointer(PointerDevice):
                     elif current_mode == MODE_PEN:
                         ow.next_pen_color(-1)
             case "KEY_RIGHT+PRESS" | "KEY_RIGHT+REPEAT":
-                if ow.is_overlay_actually_visible():
+                if normal_mode:
+                    self.emit_key_press(uinput.KEY_PAGEDOWN)
+                elif ow.is_overlay_actually_visible():
                     if current_mode == MODE_MAG_GLASS:
                         ow.zoom()
                     elif current_mode == MODE_LASER:
@@ -125,14 +131,16 @@ class ASACompositeDevicePointer(PointerDevice):
                         ow.next_overlay_color()
                     elif current_mode == MODE_PEN:
                         ow.next_pen_color()
-            case "PLAY_PAUSE+RELEASE":
+            case "KEY_PLAYPAUSE+RELEASE":
                 if normal_mode:
                     if self._was_last_esc:
-                        self.emit_key_chord([uinput.KEY_LEFTSHIFT, uinput.KEY_F5])
+                        keys = get_keychord_for_presentation_program()
+                        self.emit_key_chord(keys)
                         self._was_last_esc = False
                     else:
                         self.emit_key_press(uinput.KEY_ESC)
                         self._was_last_esc = True
+                        refocus_presentation_window()
             case "KEY_BACKSPACE+RELEASE":
                 if current_mode == MODE_PEN:
                     ow.clear_drawing()

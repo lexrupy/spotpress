@@ -1,0 +1,7 @@
+[Desktop Entry]
+Name=SpotPress
+Exec=spotpress-launcher
+Icon=spotpress
+Type=Application
+Categories=Utility;Presentation;
+Terminal=false

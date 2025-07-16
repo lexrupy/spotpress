@@ -11,6 +11,8 @@ from spotpress.utils import (
     MODE_SPOTLIGHT,
     MODE_MAG_GLASS,
     MODE_PEN,
+    get_keychord_for_presentation_program,
+    refocus_presentation_window,
 )
 from spotpress.hw.lnx.pointerdevice import PointerDevice
 
@@ -276,9 +278,11 @@ class ASASmartControlPointer(PointerDevice):
             case "ESC":
                 if normal_mode:
                     self.emit_key_press(uinput.KEY_ESC)
+                    refocus_presentation_window()
             case "START":
                 if normal_mode:
-                    self.emit_key_chord([uinput.KEY_LEFTSHIFT, uinput.KEY_F5])
+                    keys = get_keychord_for_presentation_program()
+                    self.emit_key_chord(keys)
             case "NEXT++":
                 ow.switch_mode()
             case "PREV++":

@@ -1,6 +1,8 @@
 import enum
 import os
 import getpass
+import subprocess
+import uinput
 from spotpress.qtcompat import (
     QColor,
     QImage,
@@ -196,3 +198,101 @@ def capture_monitor_screenshot(screen_index):
 def load_dark_theme(app):
     if DARK_MODE_AVAILABLE:
         app.setStyleSheet(qdarktheme.load_stylesheet())
+
+
+WINDOW_HINTS = [
+    {"class": "libreoffice-impress", "name": "Impress"},
+    {"class": "soffice", "name": "Impress"},
+    {"class": "ONLYOFFICE", "name": "pptx|ppt|odp|pdf"},
+    {"class": "wps", "name": "WPS Presentation"},
+    {"class": "et", "name": "WPS Presentation"},
+    {"class": "okular", "name": "Okular"},
+    {"class": "evince", "name": "Apresentação"},
+    {"class": "chrome", "name": "Google Slides"},
+    {"class": "firefox", "name": "Google Slides"},
+]
+
+PRESENTATION_SHORTCUTS = {
+    "libreoffice-impress": [uinput.KEY_LEFTSHIFT, uinput.KEY_F5],
+    "soffice": [uinput.KEY_LEFTSHIFT, uinput.KEY_F5],
+    "ONLYOFFICE": [uinput.KEY_LEFTCTRL, uinput.KEY_F5],
+    # Adicione outros conforme necessário
+}
+
+
+def get_open_window_classes():
+    open_classes = set()
+    for hint in WINDOW_HINTS:
+        try:
+            result = subprocess.run(
+                ["xdotool", "search", "--class", hint["class"]],
+                capture_output=True,
+                text=True,
+            )
+            if result.returncode == 0 and result.stdout.strip():
+                open_classes.add(hint["class"])
+        except Exception:
+            pass
+    return open_classes
+
+
+def get_keychord_for_presentation_program():
+    open_classes = get_open_window_classes()
+    for app_class, keys in PRESENTATION_SHORTCUTS.items():
+        if app_class in open_classes:
+            return keys
+    # Padrão se nada identificado: Shift+F5
+    return [uinput.KEY_LEFTSHIFT, uinput.KEY_F5]
+
+
+def get_window_property(window_id, prop):
+    try:
+        output = subprocess.check_output(["xprop", "-id", window_id, prop], text=True)
+        return output
+    except subprocess.CalledProcessError:
+        return ""
+
+
+def parse_xprop_value(output):
+    if "=" in output:
+        return output.split("=", 1)[1].strip().strip('"')
+    return ""
+
+
+def find_best_window(wids, class_name):
+    # Encontra o item do WINDOW_HINTS para a classe dada
+    hint = next((h for h in WINDOW_HINTS if h.get("class") == class_name), None)
+    if not hint:
+        return None
+
+    name_keywords = hint.get("name", "")
+    keywords = [k.strip().lower() for k in name_keywords.split("|")]
+
+    for wid in wids:
+        wm_name = get_window_property(wid, "_NET_WM_NAME") or get_window_property(
+            wid, "WM_NAME"
+        )
+        name_value = parse_xprop_value(wm_name)
+
+        # Verifica se alguma keyword está contida no nome
+        if any(keyword in name_value for keyword in keywords):
+            return wid
+
+
+def refocus_presentation_window():
+    for hint in WINDOW_HINTS:
+        try:
+            class_name = hint["class"]
+            cmd = ["xdotool", "search"]
+            cmd += ["--class", class_name]
+
+            result = subprocess.run(cmd, capture_output=True, text=True)
+            if result.returncode == 0 and result.stdout.strip():
+                wids = result.stdout.strip().split("\n")
+                wid = find_best_window(wids, class_name)
+                if wid is not None:
+                    subprocess.run(["xdotool", "windowactivate", wid])
+                    return True  # PARA aqui, janela ativada
+        except Exception as e:
+            print(f"[WARN] Failed to focus {hint}: {e}")
+    return False  # Nenhuma janela encontrada

@@ -11,6 +11,8 @@ from spotpress.utils import (
     MODE_PEN,
     MODE_SPOTLIGHT,
     MODE_MAG_GLASS,
+    get_keychord_for_presentation_program,
+    refocus_presentation_window,
 )
 from spotpress.hw.lnx.pointerdevice import PointerDevice
 
@@ -367,13 +369,13 @@ class BaseusOrangeDotAI(PointerDevice):
             case "PREV+long":
                 if normal_mode:
                     if self._was_last_esc:
-                        self.emit_key_chord([uinput.KEY_LEFTSHIFT, uinput.KEY_F5])
+                        keys = get_keychord_for_presentation_program()
+                        self.emit_key_chord(keys)
                         self._was_last_esc = False
                     else:
                         self.emit_key_press(uinput.KEY_ESC)
                         self._was_last_esc = True
-                # else:
-                #     ow.switch_mode(direct_mode=MODE_MOUSE)
+                        refocus_presentation_window()
             case "NEXT":
                 if ow.is_overlay_actually_visible():
                     # When not visible, already emit KEY_PAGEDOWN
