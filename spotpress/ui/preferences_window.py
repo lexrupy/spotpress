@@ -75,7 +75,7 @@ class SpotpressPreferences(QMainWindow):
 
         # Quando fechar a janela, ao invés de fechar, esconder
         self.setWindowFlags(self.windowFlags() | Qt_WindowMinimizeButtonHint)
-        self.setMinimumSize(650, 700)
+        self.setMinimumSize(650, 750)
 
         self._ctx = AppContext(
             screen_index=0,
@@ -378,6 +378,7 @@ class SpotpressPreferences(QMainWindow):
 
     def load_config(self):
         if not os.path.exists(CONFIG_PATH):
+            self.preferences_tab.load_defaults()
             return
         config = configparser.ConfigParser()
         config.read(CONFIG_PATH)

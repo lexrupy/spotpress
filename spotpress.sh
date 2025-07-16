@@ -10,4 +10,4 @@ while [ -L "$SOURCE" ]; do
 done
 DIR="$(cd -P "$(dirname "$SOURCE")" && pwd)"
 
-exec "$DIR/main.py" "$0" &
+exec "$DIR/main.py" "$@" 

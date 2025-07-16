@@ -428,6 +428,27 @@ class PreferencesTab(QWidget):
         if selected_row >= 0:
             self.modes_list.setCurrentRow(selected_row)
 
+    def load_defaults(self):
+        self.spotlight_size.setValue(35)
+        self.spotlight_shape.setCurrentIndex(0)
+        self.spotlight_bg_mode.setCurrentIndex(1)
+        self.magnify_size.setValue(35)
+        self.magnify_border.setChecked(True)
+        self.magnify_shape.setCurrentIndex(0)
+        self.magnify_bg_mode.setCurrentIndex(2)
+        self.laser_dot_size.setValue(5)
+        self.laser_opacity.setValue(60)
+        self.laser_reflection.setChecked(True)
+        self.marker_width.setValue(20)
+        self.marker_opacity.setValue(90)
+        self.marker_color.setCurrentIndex(1)
+        self.shade_opacity.setValue(75)
+        self.border_opacity.setValue(90)
+        self.border_width.setValue(8)
+        self.border_color.setCurrentIndex(7)  # White
+        self.general_always_capture_screenshot.setChecked(False)
+        self.general_enable_auto_mode.setChecked(True)
+
     def on_reset_clicked(self):
         resposta = QMessageBox.question(
             self,
@@ -438,25 +459,7 @@ class PreferencesTab(QWidget):
         )
 
         if resposta == QMessageBox.StandardButton.Yes:
-            self.spotlight_size.setValue(35)
-            self.spotlight_shape.setCurrentIndex(0)
-            self.spotlight_bg_mode.setCurrentIndex(0)
-            self.magnify_size.setValue(35)
-            self.magnify_border.setChecked(True)
-            self.magnify_shape.setCurrentIndex(1)
-            self.magnify_bg_mode.setCurrentIndex(0)
-            self.laser_dot_size.setValue(5)
-            self.laser_opacity.setValue(60)
-            self.laser_reflection.setChecked(True)
-            self.marker_width.setValue(20)
-            self.marker_opacity.setValue(90)
-            self.marker_color.setCurrentIndex(1)
-            self.shade_opacity.setValue(75)
-            self.border_opacity.setValue(90)
-            self.border_width.setValue(8)
-            self.border_color.setCurrentIndex(7)  # White
-            self.general_always_capture_screenshot.setChecked(True)
-            self.general_enable_auto_mode.setChecked(True)
+            self.load_defaults()
 
     def on_test_clicked(self):
         if self._ctx.overlay_window is not None:
