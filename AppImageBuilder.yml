@@ -1,0 +1,43 @@
+version: 1
+
+AppDir:
+  path: ./AppDir
+  app_info:
+    id: br.org.spotpress
+    name: SpotPress
+    icon: spotpress
+    version: "1.0.0"
+    exec: usr/venv/bin/python3
+    exec_args: "$APPDIR/usr/bin/main.py $@"t
+
+  runtime:
+    env:
+      PYTHONHOME: /usr
+      PYTHONPATH: $APPDIR/usr/lib/python3.11/site-packages
+      QT_QPA_PLATFORM: xcb
+      QT_PLUGIN_PATH: $APPDIR/usr/lib/qt6/plugins
+
+  files:
+    include:
+      - AppDir/usr/
+      - spotpress.desktop
+      - resources/spotpress.png
+    exclude:
+      - "*.pyc"
+      - "__pycache__"
+  apt:
+    include:
+      - libglib2.0-0
+      - libx11-6
+      - libxcb1
+      - libxext6
+      - libxrender1
+      - libsm6
+      - libice6
+      - libfreetype6
+      - libfontconfig1
+      - libxkbcommon-x11-0
+      - libxfixes3
+
+AppImage:
+  arch: x86_64
