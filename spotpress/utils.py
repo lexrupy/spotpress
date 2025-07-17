@@ -1,8 +1,8 @@
 import enum
 import os
+import sys
 import getpass
 import subprocess
-import uinput
 from spotpress.qtcompat import (
     QColor,
     QImage,
@@ -16,6 +16,14 @@ from spotpress.qtcompat import (
     Qt_Color_Transparent,
 )
 
+WINDOWS_OS = False
+
+
+if sys.platform.startswith("win"):
+    WINDOWS_OS = True
+
+if not WINDOWS_OS: 
+    import uinput
 
 try:
     import qdarktheme
@@ -104,7 +112,6 @@ ICON_FILE = os.path.join(
 
 SOCKET_NAME = f"spotpress_socket_{getpass.getuser()}"
 
-WINDOWS_OS = False
 
 
 class SingletonMeta(type):
@@ -212,12 +219,13 @@ WINDOW_HINTS = [
     {"class": "firefox", "name": "Google Slides"},
 ]
 
-PRESENTATION_SHORTCUTS = {
-    "libreoffice-impress": [uinput.KEY_LEFTSHIFT, uinput.KEY_F5],
-    "soffice": [uinput.KEY_LEFTSHIFT, uinput.KEY_F5],
-    "ONLYOFFICE": [uinput.KEY_LEFTCTRL, uinput.KEY_F5],
-    # Adicione outros conforme necessário
-}
+if not WINDOWS_OS:
+    PRESENTATION_SHORTCUTS = {
+        "libreoffice-impress": [uinput.KEY_LEFTSHIFT, uinput.KEY_F5],
+        "soffice": [uinput.KEY_LEFTSHIFT, uinput.KEY_F5],
+        "ONLYOFFICE": [uinput.KEY_LEFTCTRL, uinput.KEY_F5],
+        # Adicione outros conforme necessário
+    }
 
 
 def get_open_window_classes():

@@ -41,8 +41,7 @@ from spotpress.ui.devices_tab import DevicesTab
 from spotpress.ui.log_tab import LogTab
 
 
-if sys.platform.startswith("win"):
-    WINDOWS_OS = True
+if WINDOWS_OS:
     from spotpress.hw.win.devices import DeviceMonitor
 else:
     from spotpress.hw.lnx.devices import DeviceMonitor
