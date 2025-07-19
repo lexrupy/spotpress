@@ -34,20 +34,16 @@ from spotpress.utils import (
     get_screen_geometry,
     ICON_FILE,
     CONFIG_PATH,
-    WINDOWS_OS,
 )
 from spotpress.ui.preferences_tab import PreferencesTab
 from spotpress.ui.devices_tab import DevicesTab
 from spotpress.ui.log_tab import LogTab
 
 
-if WINDOWS_OS:
-    from spotpress.hw.win.devices import DeviceMonitor
-else:
-    from spotpress.hw.lnx.devices import DeviceMonitor
+from spotpress.hw.lnx.devices import DeviceMonitor
 
 
-if not WINDOWS_OS and SP_QT_VERSION == 5:
+if SP_QT_VERSION == 5:
     import ctypes
 
     # Redireciona mensagens do Qt para /dev/null
@@ -84,8 +80,6 @@ class SpotpressPreferences(QMainWindow):
             main_window=self,
             debug_mode=debug_mode,
         )
-
-        self._ctx.windows_os = WINDOWS_OS
 
         self.tabs = QTabWidget()
         self.preferences_tab = PreferencesTab(self, self._ctx)

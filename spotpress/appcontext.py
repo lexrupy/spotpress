@@ -32,7 +32,6 @@ class AppContext(QObject):
         self._compatible_modes = []
         self._config = ObservableDict(callback=self._on_config_changed)
         self._support_auto_mode = False
-        self._windows_os = False
         self._current_mode = MODE_MOUSE
         self._main_window = main_window
         self._active_device = None
@@ -91,14 +90,6 @@ class AppContext(QObject):
         if mode != self._current_mode:
             self._current_mode = mode
             self.currentModeChanged.emit(mode)
-
-    @property
-    def windows_os(self):
-        return self._windows_os
-
-    @windows_os.setter
-    def windows_os(self, wo):
-        self._windows_os = wo
 
     @property
     def main_window(self):

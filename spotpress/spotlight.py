@@ -67,11 +67,6 @@ class SpotlightOverlayWindow(QWidget):
 
         self._ctx = context
 
-        if self._ctx.windows_os:
-            instance = QApplication.instance()
-            if instance:
-                instance.installEventFilter(self)
-
         self.setWindowFlags(
             Qt_WindowType_FramelessWindowHint
             | Qt_WindowType_WindowStaysOnTopHint
