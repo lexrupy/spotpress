@@ -1,6 +1,6 @@
 # SpotPress
 
-**SpotPress** is a modern, cross-platform presentation tool written in Python.
+**SpotPress** is a modern, presentation tool written in Python.
 It provides a spotlight/laser pointer overlay for live presentations, supporting multiple display setups and advanced features like pen drawing, magnifier, and full device integration.
 
 **Notice: currently only works on Linux with X11 interface backend**
@@ -206,7 +206,6 @@ spotpressctl --start
 - `--quit`: Quit the running instance
 - `--start`: Launch SpotPress if not running
 - `--set-mode=MODE`: Change to one of the overlay modes:
-
   - `mouse`, `0`
   - `spotlight`, `1`
   - `laser`, `2`
