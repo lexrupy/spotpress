@@ -344,7 +344,7 @@ class BaseusOrangeDotAI(PointerDevice):
         current_mode = self._ctx.current_mode
         normal_mode = current_mode == MODE_MOUSE or ow.is_overlay_actually_visible()
 
-        # self.log(f"{button}")
+        self.log(f"DO ACTION -> {button}")
         match button:
             case "OK":
                 if ow.is_overlay_actually_visible():
@@ -397,6 +397,8 @@ class BaseusOrangeDotAI(PointerDevice):
                 pass
             case "MOUSE++":
                 ow.switch_mode()
+            case "NEXT++":
+                ow.switch_mode(-1)
             case "MIC":
                 if not self.check_hold_repeat("MIC"):
                     if current_mode == MODE_LASER:

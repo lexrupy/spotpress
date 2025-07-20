@@ -75,6 +75,17 @@ LASER_COLORS = [
     (QColor(255, 165, 0), "Orange"),
     (QColor(255, 255, 255), "White"),
     (QColor(0, 0, 0), "Black"),
+    # Cores intermediárias: vibrantes mas não berrantes
+    (QColor(173, 99, 255), "Soft Violet"),
+    (QColor(0, 191, 255), "Deep Sky Blue"),
+    (QColor(144, 238, 144), "Light Green"),
+    (QColor(255, 140, 105), "Coral"),
+    (QColor(160, 160, 255), "Periwinkle"),
+    (QColor(255, 120, 203), "Medium Pink"),
+    (QColor(100, 200, 200), "Dusty Teal"),
+    (QColor(180, 130, 255), "Lilac"),
+    (QColor(255, 200, 100), "Amber"),
+    (QColor(120, 220, 120), "Spring Green"),
     # SE INCLUIR MAIS CORES MANTER ESTA A ÚLTIMA
     (QColor(0, 0, 0, 0), "Transparent"),
 ]
