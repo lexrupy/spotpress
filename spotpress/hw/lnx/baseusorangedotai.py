@@ -42,7 +42,7 @@ class BaseusOrangeDotAI(PointerDevice):
         self._ultimo_botao_ativo = None
         self._lock = threading.Lock()
         self._hold_states = {}
-        self._was_last_esc = False
+        self._was_last_esc = True
 
         self._single_action_buttons = {
             97: "OK",
@@ -364,11 +364,13 @@ class BaseusOrangeDotAI(PointerDevice):
                 if ow.is_overlay_actually_visible():
                     # When not visible, already emit KEY_PAGEUP
                     pass
+                else:
+                    self.emit_key_press(uinput.KEY_PAGEUP)
             case "PREV+long":
                 if normal_mode:
                     if self._was_last_esc:
                         keys = get_keychord_for_presentation_program()
-                        self.emit_key_chord(keys)
+                        self.emit_key_press(keys)
                         self._was_last_esc = False
                     else:
                         self.emit_key_press(uinput.KEY_ESC)
@@ -378,7 +380,11 @@ class BaseusOrangeDotAI(PointerDevice):
                 if ow.is_overlay_actually_visible():
                     # When not visible, already emit KEY_PAGEDOWN
                     pass
+                else:
+                    self.emit_key_press(uinput.KEY_PAGEDOWN)
             case "NEXT+long":
+                if current_mode == MODE_MOUSE:
+                    self.emit_key_press(uinput.KEY_B)
                 pass
             case "MOUSE":
                 if not self.check_hold_repeat("MOUSE"):
@@ -499,14 +505,13 @@ class BaseusOrangeDotAI(PointerDevice):
             ow = self._ctx.overlay_window
             button = None
 
-            # self.log_key(event)
             match event.code:
                 case (
                     ec.KEY_VOLUMEUP
                     | ec.KEY_VOLUMEDOWN
-                    | ec.KEY_B
-                    | ec.KEY_PAGEDOWN
-                    | ec.KEY_PAGEUP
+                    # | ec.KEY_B
+                    # | ec.KEY_PAGEDOWN
+                    # | ec.KEY_PAGEUP
                     # | ec.KEY_LEFTSHIFT
                     # | ec.KEY_E
                     # | ec.KEY_F5

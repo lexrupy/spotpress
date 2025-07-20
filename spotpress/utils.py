@@ -1,6 +1,5 @@
 import enum
 import os
-import sys
 import getpass
 import subprocess
 from spotpress.qtcompat import (
@@ -214,19 +213,24 @@ def load_dark_theme(app):
 WINDOW_HINTS = [
     {"class": "libreoffice-impress", "name": "Impress"},
     {"class": "soffice", "name": "Impress"},
-    {"class": "ONLYOFFICE", "name": "pptx|ppt|odp|pdf"},
-    {"class": "wps", "name": "WPS Presentation"},
-    {"class": "et", "name": "WPS Presentation"},
+    {"class": "onlyoffice", "name": "pptx|ppt|odp|pdf"},
+    {"class": "wpsoffice", "name": "WPS Office"},
     {"class": "okular", "name": "Okular"},
     {"class": "evince", "name": "Apresentação"},
-    {"class": "chrome", "name": "Google Slides"},
+    {"class": "atril", "name": "pdf"},
+    {"class": "google-chrome", "name": "Apresentações Google"},
     {"class": "firefox", "name": "Google Slides"},
 ]
 
 PRESENTATION_SHORTCUTS = {
     "libreoffice-impress": [uinput.KEY_LEFTSHIFT, uinput.KEY_F5],
     "soffice": [uinput.KEY_LEFTSHIFT, uinput.KEY_F5],
-    "ONLYOFFICE": [uinput.KEY_LEFTCTRL, uinput.KEY_F5],
+    "onlyoffice": [uinput.KEY_LEFTCTRL, uinput.KEY_F5],
+    "wpsoffice": [uinput.KEY_LEFTCTRL, uinput.KEY_F5],
+    "google-chrome": [uinput.KEY_LEFTCTRL, uinput.KEY_F5],
+    "atril": uinput.KEY_F5,
+    "evince": uinput.KEY_F5,
+    "okular": [uinput.KEY_LEFTCTRL, uinput.KEY_LEFTSHIFT, uinput.KEY_P],
     # Adicione outros conforme necessário
 }
 
@@ -241,7 +245,7 @@ def get_open_window_classes():
                 text=True,
             )
             if result.returncode == 0 and result.stdout.strip():
-                open_classes.add(hint["class"])
+                open_classes.add(hint["class"].lower())
         except Exception:
             pass
     return open_classes
@@ -250,7 +254,7 @@ def get_open_window_classes():
 def get_keychord_for_presentation_program():
     open_classes = get_open_window_classes()
     for app_class, keys in PRESENTATION_SHORTCUTS.items():
-        if app_class in open_classes:
+        if app_class.lower() in open_classes:
             return keys
     # Padrão se nada identificado: Shift+F5
     return [uinput.KEY_LEFTSHIFT, uinput.KEY_F5]

@@ -208,16 +208,22 @@ class PointerDevice(BasePointerDevice):
             return False
 
     def emit_key_press(self, key):
+        if isinstance(key, list):
+            self.emit_key_chord(key)
+            return
         ui = self._ctx.ui
         ui.emit(key, 1)  # Pressiona
         ui.emit(key, 0)  # Solta
 
     def emit_key_chord(self, keys):
         ui = self._ctx.ui
-        ui.emit(keys[0], 1)  # Pressiona primeira tecla, ex: SHIFT
-        ui.emit(keys[1], 1)  # Pressiona segunda tecla ex: F5
-        ui.emit(keys[1], 0)  # Solta segunda tecla
-        ui.emit(keys[0], 0)  # Solta primeira tecla
+        ui = self._ctx.ui
+        # Pressiona todas
+        for key in keys:
+            ui.emit(key, 1)
+        # Solta todas em ordem inversa
+        for key in reversed(keys):
+            ui.emit(key, 0)
 
     def handle_event(self, event):
         pass

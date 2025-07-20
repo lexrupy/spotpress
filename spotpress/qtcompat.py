@@ -228,7 +228,7 @@ except ImportError:
     Qt_ConnectionType_QueuedConnection = Qt.QueuedConnection
 
     QPainter_CompositionMode_Clear = QPainter.CompositionMode_Clear
-    QPainter_CompositionMode_Source = QPainter.CompositionMode_SourceOver
+    QPainter_CompositionMode_Source = QPainter.CompositionMode_Source
 
     QSizePolicy_Preferred = QSizePolicy.Preferred
     QSizePolicy_Fixed = QSizePolicy.Fixed

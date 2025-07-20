@@ -38,6 +38,7 @@ class DeviceMonitor(BaseDeviceMonitor):
                 uinput.BTN_LEFT,
                 uinput.BTN_RIGHT,
                 uinput.KEY_B,
+                uinput.KEY_P,
                 uinput.KEY_PAGEUP,
                 uinput.KEY_PAGEDOWN,
                 uinput.KEY_ESC,
