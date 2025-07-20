@@ -73,7 +73,7 @@ class ASACompositeDevicePointer(PointerDevice):
         normal_mode = current_mode == MODE_MOUSE or not ow.is_overlay_actually_visible()
 
         if button != "MOUSE_MOVE":
-            self.log(f"EXECUTA ACAO -> {button}")
+            self.log(f"DO_ACTION -> {button}")
 
         match button:
             case "KEY_COMPOSE+RELEASE":
@@ -85,7 +85,7 @@ class ASACompositeDevicePointer(PointerDevice):
                     now = time.time()
                     if now - self._last_mouse_move_action > 1.2:
                         self._last_mouse_move_action = now
-                        self.log(f"EXECUTA ACAO -> {button}")
+                        self.log(f"DO ACTION -> {button}")
                         self._ctx.show_overlay()
             case "MOUSE_STOP":
                 if ow.auto_mode_enabled() and ow.is_overlay_actually_visible():
@@ -107,7 +107,10 @@ class ASACompositeDevicePointer(PointerDevice):
                     ow.change_laser_size(-1)
                 if current_mode in [MODE_SPOTLIGHT, MODE_MAG_GLASS]:
                     ow.change_spot_radius(-2)
-            case "KEY_LEFT+PRESS" | "KEY_LEFT+REPEAT":
+            case "KEY_LEFT+REPEAT":
+                if normal_mode:
+                    self.emit_key_press(uinput.KEY_PAGEUP)
+            case "KEY_LEFT+PRESS":
                 if normal_mode:
                     self.emit_key_press(uinput.KEY_PAGEUP)
                 elif ow.is_overlay_actually_visible():
@@ -119,7 +122,7 @@ class ASACompositeDevicePointer(PointerDevice):
                         ow.next_overlay_color(-1)
                     elif current_mode == MODE_PEN:
                         ow.next_pen_color(-1)
-            case "KEY_RIGHT+PRESS" | "KEY_RIGHT+REPEAT":
+            case "KEY_RIGHT+PRESS":
                 if normal_mode:
                     self.emit_key_press(uinput.KEY_PAGEDOWN)
                 elif ow.is_overlay_actually_visible():
@@ -131,6 +134,9 @@ class ASACompositeDevicePointer(PointerDevice):
                         ow.next_overlay_color()
                     elif current_mode == MODE_PEN:
                         ow.next_pen_color()
+            case "KEY_RIGHT+REPEAT":
+                if normal_mode:
+                    self.emit_key_press(uinput.KEY_PAGEDOWN)
             case "KEY_PLAYPAUSE+RELEASE":
                 if normal_mode:
                     if self._was_last_esc:

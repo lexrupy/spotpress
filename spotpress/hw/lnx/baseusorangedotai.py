@@ -240,8 +240,6 @@ class BaseusOrangeDotAI(PointerDevice):
                 return True
         return False
 
-        # self.executa_acao(f"{button}+release")
-
     def set_hold_start(self, button, value=True):
         now = time.time()
         self._hold_states[button] = self._hold_states.get(button, {})

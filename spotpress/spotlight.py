@@ -46,7 +46,6 @@ from .utils import (
     MODE_MAP,
     PEN_COLORS,
     SHADE_COLORS,
-    Mode,
     apply_blur,
     capture_monitor_screenshot,
     MODE_SPOTLIGHT,
@@ -776,22 +775,6 @@ class SpotlightOverlayWindow(QWidget):
         self.current_path = []
         self.drawing = False
         self.update()
-
-    def handle_draw_command(self, command):
-        match command:
-            case "start_move":
-                if self._ctx.current_mode == MODE_PEN:
-                    self.start_pen_path()
-
-            case "stop_move":
-                if self._ctx.current_mode == MODE_PEN and self.drawing:
-                    self.finish_pen_path()
-
-            case "line_width_increase":
-                self.current_line_width = min(self.current_line_width + 1, 20)
-
-            case "line_width_decrease":
-                self.current_line_width = max(self.current_line_width - 1, 1)
 
     def mousePressEvent(self, event):
         if self._ctx.current_mode == MODE_PEN:

@@ -17,7 +17,6 @@ from spotpress.qtcompat import (
     QGridLayout,
     QListWidget,
     QGroupBox,
-    QRadioButton,
     QIcon,
     QPixmap,
     QColor,

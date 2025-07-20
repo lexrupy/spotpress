@@ -20,7 +20,7 @@ from spotpress.hw.lnx.pointerdevice import PointerDevice
 class ASASmartControlPointer(PointerDevice):
     VENDOR_ID = 0x1915
     PRODUCT_ID = 0x1001
-    PRODUCT_DESCRIPTION = "123 COM Smart Control"
+    # PRODUCT_DESCRIPTION = "123 COM Smart Control"
     DOUBLE_CLICK_INTERVAL = 0.3
 
     def __init__(self, app_ctx, hidraw_path):
@@ -213,7 +213,7 @@ class ASASmartControlPointer(PointerDevice):
         normal_mode = current_mode == MODE_MOUSE or ow.is_overlay_actually_visible()
 
         if button != "MOUSE_MOVE":
-            self.log(f"EXECUTA ACAO -> {button}")
+            self.log(f"DO ACTION -> {button}")
         match button:
             case "TAB":
                 ow.switch_mode()
@@ -226,16 +226,32 @@ class ASASmartControlPointer(PointerDevice):
                     now = time.time()
                     if now - self._last_mouse_move_action > 1.2:
                         self._last_mouse_move_action = now
-                        self.log(f"EXECUTA ACAO -> {button}")
+                        self.log(f"DO ACTION -> {button}")
                         self._ctx.show_overlay()
             case "MOUSE_STOP":
                 if ow.auto_mode_enabled() and ow.is_overlay_actually_visible():
                     self._ctx.hide_overlay()
             case "PREV":
-                if normal_mode:
+                if current_mode == MODE_PEN:
+                    ow.next_pen_color(-1)
+                elif current_mode == MODE_LASER:
+                    ow.next_laser_color(-1)
+                elif current_mode == MODE_SPOTLIGHT:
+                    ow.next_overlay_color(-1)
+                elif current_mode == MODE_MAG_GLASS:
+                    ow.zoom()
+                elif normal_mode:
                     self.emit_key_press(uinput.KEY_PAGEUP)
             case "NEXT":
-                if normal_mode:
+                if current_mode == MODE_PEN:
+                    ow.next_pen_color()
+                elif current_mode == MODE_LASER:
+                    ow.next_laser_color()
+                elif current_mode == MODE_SPOTLIGHT:
+                    ow.next_overlay_color()
+                elif current_mode == MODE_MAG_GLASS:
+                    ow.zoom(-1)
+                elif normal_mode:
                     self.emit_key_press(uinput.KEY_PAGEDOWN)
             case "G_UP":
                 if ow.is_overlay_actually_visible():
@@ -270,9 +286,12 @@ class ASASmartControlPointer(PointerDevice):
                         if now - self._last_overlay_color_change > 1.2:
                             self._last_overlay_color_change = now
                             ow.next_overlay_color()
+            case "HGL":
+                if current_mode == MODE_PEN:
+                    ow.clear_drawing()
             case "HGL+hold":
-                if ow.is_overlay_actually_visible():
-                    pass
+                if current_mode == MODE_PEN:
+                    ow.clear_drawing(all=True)
             case "HGL+release":
                 ow.finish_pen_path()
             case "ESC":
@@ -354,7 +373,10 @@ class ASASmartControlPointer(PointerDevice):
                     if len(self._rel_y_buffer) > self._rel_buffer_size:
                         self._rel_y_buffer.pop(0)
                 # Repassa evento virtual
-                self._verifica_direcao_gestos()
+                if not ow.drawing:
+                    self._verifica_direcao_gestos()
+                else:
+                    self._ctx.ui.emit((event.type, event.code), event.value)
             else:
                 self._last_mouse_movement = time.time()
                 if self._last_mouse_movement - self._mouse_down_time > 1.5:
@@ -366,7 +388,7 @@ class ASASmartControlPointer(PointerDevice):
             self._reset_auto_mode_timer()
             match event.code:
                 case ec.BTN_LEFT:
-                    if self._ctx.current_mode == MODE_MOUSE:
+                    if self._ctx.current_mode in [MODE_MOUSE, MODE_PEN]:
                         self._ctx.ui.emit((event.type, event.code), event.value)
                     else:
                         if event.value == 1:
