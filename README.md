@@ -235,6 +235,75 @@ Settings are stored in `~/.config/spotpress/config.ini` and managed via the GUI.
 - ID `1915:1025` - _Nordic Semiconductor ASA USB Composite Device_
   ![LeLong LE-7676](docs/lelong_le7676.jpg)
 
+## Permission Problems
+
+You may run into permissio problems when try to run spotpress.
+
+`packages/uinput/__init__.py", line 74, in _open_error_handler
+    raise OSError(code, msg)
+PermissionError: [Errno 13] Failed to open the uinput device:`
+
+you need to make shure you have uinput kernel module loaded:
+
+### How to solve:
+
+Verify if the uinput module was loaded:
+
+`lsmod | grep uinput`
+
+### If nothins is shown, load manually the module:
+
+`sudo modprobe uinput`
+
+### Vefify the permissions:
+
+`ls -l /dev/uinput`
+
+Typical output:
+
+`crw------- 1 root root 10, 223 set 22 15:30 /dev/uinput`
+
+### Run command:
+
+sudo chmod 666 /dev/uinput
+
+the application should run. To make the changes permanent after reboot create the file:
+`/etc/udev/rules.d/99-uinput.rules`
+
+with content:
+
+`KERNEL=="uinput", MODE="0660", GROUP="input", OPTIONS+="static_node=uinput"`
+
+### And as per device configuration you may need to create some udev rules files as follows:
+
+### Baseus Orange dot AI
+
+`/etc/udev/rules.d/99-baseus.rules`
+
+`
+SUBSYSTEM=="hidraw*", ATTRS{idVendor}=="abc8", ATTRS{idProduct}=="ca08", MODE="0666"
+KERNEL=="hidraw*", ATTRS{idVendor}=="abc8", ATTRS{idProduct}=="ca08", MODE="0666"
+SUBSYSTEM=="input*", ATTRS{idVendor}=="abc8", ATTRS{idProduct}=="ca08", MODE="0666"
+KERNEL=="input*", ATTRS{idVendor}=="abc8", ATTRS{idProduct}=="ca08", MODE="0666"`
+
+### Lelong Pointer
+
+`/etc/udev/rules.d/99-lelong.rules`
+
+`
+SUBSYSTEM=="hidraw*", ATTRS{idVendor}=="1915", ATTRS{idProduct}=="1001", MODE="0666"
+KERNEL=="hidraw*", ATTRS{idVendor}=="1915", ATTRS{idProduct}=="1001", MODE="0666"
+SUBSYSTEM=="hidraw*", ATTRS{idVendor}=="1915", ATTRS{idProduct}=="1025", MODE="0666"
+KERNEL=="hidraw*", ATTRS{idVendor}=="1915", ATTRS{idProduct}=="1025", MODE="0666"`
+
+### After add your user to input group
+
+`sudo usermod -aG input $USER`
+
+then reload the rules:
+
+`sudo udevadm control --reload-rules && sudo udevadm trigger`
+
 ## Developing
 
 To run in development mode:
