@@ -370,7 +370,9 @@ class BaseusOrangeDotAI(PointerDevice):
                 if normal_mode:
                     if self._was_last_esc:
                         keys = get_keychord_for_presentation_program()
-                        self.emit_key_press(keys)
+                        if self._ctx.debug_mode:
+                            self.log_key(keys)
+                        self.emit_key_chord(keys)
                         self._was_last_esc = False
                     else:
                         self.emit_key_press(uinput.KEY_ESC)

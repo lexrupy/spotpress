@@ -227,10 +227,10 @@ PRESENTATION_SHORTCUTS = {
     "soffice": [uinput.KEY_LEFTSHIFT, uinput.KEY_F5],
     "onlyoffice": [uinput.KEY_LEFTCTRL, uinput.KEY_F5],
     "wpsoffice": [uinput.KEY_LEFTCTRL, uinput.KEY_F5],
-    "google-chrome": [uinput.KEY_LEFTCTRL, uinput.KEY_F5],
-    "atril": uinput.KEY_F5,
-    "evince": uinput.KEY_F5,
+    "atril": [uinput.KEY_F5],
+    "evince": [uinput.KEY_F5],
     "okular": [uinput.KEY_LEFTCTRL, uinput.KEY_LEFTSHIFT, uinput.KEY_P],
+    "google-chrome": [uinput.KEY_LEFTCTRL, uinput.KEY_F5],
     # Adicione outros conforme necessário
 }
 

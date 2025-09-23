@@ -290,10 +290,16 @@ class PointerDevice(BasePointerDevice):
     def log(self, message):
         self._ctx.log(f"[{self.__class__.__name__}] - {message}")
 
-    def log_key(self, ev):
+    def log_key(self, key, prefix=""):
         all_keys = ec.KEY | ec.BTN
-        if ev.value == 1:
-            direction = "down"
-        else:
-            direction = "up"
-        self.log(f"{all_keys[ev.code]} - {direction}")
+        # normaliza: se não for lista, transforma em lista
+        chord = []
+        if isinstance(key, tuple):
+            chord.append(all_keys.get(key[1]))
+
+        if isinstance(key, list):
+            for k in key:
+                if isinstance(k, tuple):
+                    chord.append(all_keys.get(k[1]))
+        s_chord = " + ".join(chord)
+        self.log(f"{prefix}[{s_chord}]")

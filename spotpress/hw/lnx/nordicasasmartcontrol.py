@@ -301,6 +301,8 @@ class ASASmartControlPointer(PointerDevice):
             case "START":
                 if normal_mode:
                     keys = get_keychord_for_presentation_program()
+                    if self._ctx.debug_mode:
+                        self.log_key(keys)
                     self.emit_key_chord(keys)
             case "NEXT++":
                 ow.switch_mode()
@@ -314,13 +316,6 @@ class ASASmartControlPointer(PointerDevice):
             return 'attrs{binterfaceprotocol}=="01"' in udevadm_output
         return True
 
-    def log_key(self, ev):
-        all_keys = ec.KEY | ec.BTN
-        if ev.value == 1:
-            direction = "down"
-        else:
-            direction = "up"
-        self.log(f"{all_keys[ev.code]} - {direction}")
 
     def _verifica_direcao_gestos(self):
         if len(self._rel_x_buffer) == self._rel_buffer_size:
